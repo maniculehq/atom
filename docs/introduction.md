@@ -77,6 +77,7 @@ When a visitor loads a blog post, here is what happens:
 
 1. Your Next.js app renders the `Atom` Server Component.
 2. The SDK calls `GET /api/posts/get/single?post_id=<id>` on the Atom API, passing `Authorization: Bearer <project_key>`.
+
 3. Atom verifies the key, retrieves the post from MongoDB, and returns it as JSON.
 4. The SDK compiles the Markdown body and returns the finished HTML to your page.
 
