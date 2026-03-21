@@ -624,7 +624,9 @@ import { AtomLoadingSkeleton, AtomArticleSkeleton } from 'atom-nextjs';
 <Suspense fallback={<AtomLoadingSkeleton />}>
   <AtomPage projectKey={...} baseRoute="/blog" />
 </Suspense>
+```
 
+```tsx
 // For individual post pages (shows a banner + text skeletons)
 <Suspense fallback={<AtomArticleSkeleton />}>
   <Atom projectKey={...} postId={...} />
