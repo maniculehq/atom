@@ -8,7 +8,7 @@
   "phase": "ready",
   "status": "active",
   "createdAt": "2026-03-21T05:39:49.254Z",
-  "updatedAt": "2026-03-21T06:09:40.273Z",
+  "updatedAt": "2026-03-21T06:11:48.429Z",
   "gatherState": {
     "status": "approved",
     "report": {
@@ -101,7 +101,7 @@
       "path": "api-reference.md",
       "pageType": "API Reference",
       "outcome": "Should be able to understand the entire API structure and able to interact with it on their own through the atom source code.",
-      "phase": "review",
+      "phase": "chat",
       "status": "idle",
       "report": {
         "blocking": [
