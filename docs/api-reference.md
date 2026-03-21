@@ -197,7 +197,8 @@ Creates a new user account, starts a session, and sets the `auth_session` cookie
 
 **Errors:**
 - `"Email not valid."` — email failed regex validation
-- `"Password must be at least 8 characters long."`
+- `"Please enter a password."` — password field is empty
+- `"Password must be at least 8 characters long."` — password is present but fewer than 8 characters
 - `"Email already in use."` — MongoDB duplicate key (code 11000)
 - `"Invalid first name."` / `"Invalid last name."` — empty or exceeds 30 characters
 
@@ -347,7 +348,7 @@ Deletes a project and removes it from the user's `UserDocument.projects` array. 
 
 Fetches a single project. Accepts either a session cookie (dashboard) or a Bearer token (programmatic). The auth method determines which path is taken.
 
-**When called with a session cookie:** Query parameter `project_id` is required. The session user is validated but ownership is not checked here — any authenticated user can fetch any project by ID if they know it.
+**When called with a session cookie:** Query parameter `project_id` is required. Ownership is verified — the request will fail with `"Not authorized."` if the authenticated user is not the project's `creator_uid`.
 
 **When called with a Bearer token:** No query parameters needed. The project is looked up by `project_key` directly.
 
@@ -439,7 +440,7 @@ Updates one or more fields of an existing post. All fields are optional — only
   author?: string;    // Max 30 characters
   body?: string;      // Subject to plan body length limit
   teaser?: string;    // Max 100 characters
-  keywords?: string;  // Comma-separated string
+  keywords?: string;  // Max 30 characters
   image?: string;     // URL string
 }
 ```
@@ -630,7 +631,7 @@ import { AtomLoadingSkeleton, AtomArticleSkeleton } from 'atom-nextjs';
 </Suspense>
 ```
 
-Both use `react-loading-skeleton` and import its CSS. No props are accepted.
+Both use `react-loading-skeleton`. `AtomLoadingSkeleton` imports `react-loading-skeleton/dist/skeleton.css` automatically. `AtomArticleSkeleton` does **not** import the CSS — you must import it yourself (`import 'react-loading-skeleton/dist/skeleton.css'`) if you use it. Neither component accepts props.
 
 ---
 
@@ -644,6 +645,8 @@ Both use `react-loading-skeleton` and import its CSS. No props are accepted.
 | Watermark | Yes | No | No |
 
 Plan is stored on the `UserDocument` as `"single"`, `"startup"`, or `"business"`. Startup and Business plans are currently disabled in the source (`disabled: true` in `lib/contants.tsx`).
+
+> **Note:** The "Max posts" limit is defined in `planDetails` (`max_docs`) but is **not enforced** by any API route. The API will not reject post creation based on post count.
 
 ---
 
