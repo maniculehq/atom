@@ -5,5 +5,79 @@
   "sourceRepoName": "atom",
   "outputRepoOwner": "incogiscool",
   "outputRepoName": "atom",
-  "createdAt": "2026-03-21T05:39:48.120Z"
+  "phase": "ready",
+  "status": "active",
+  "createdAt": "2026-03-21T05:39:49.254Z",
+  "updatedAt": "2026-03-21T05:45:20.005Z",
+  "gatherState": {
+    "status": "approved",
+    "report": {
+      "blocking": [
+        {
+          "id": "page-missing-type-1",
+          "description": "Page 1 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-2",
+          "description": "Page 2 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-3",
+          "description": "Page 3 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-4",
+          "description": "Page 4 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-5",
+          "description": "Page 5 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-7",
+          "description": "Page 7 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-9",
+          "description": "Page 9 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-type-10",
+          "description": "Page 10 in proposal is missing its page type"
+        },
+        {
+          "id": "page-missing-outcome-11",
+          "description": "Page 11 in proposal is missing its one-sentence outcome statement"
+        },
+        {
+          "id": "page-missing-type-12",
+          "description": "Page 12 in proposal is missing its page type"
+        }
+      ],
+      "judgments": [
+        {
+          "id": "many-open-questions",
+          "description": "open-questions.md has 14 unresolved items (more than 5)"
+        },
+        {
+          "id": "no-quickstart",
+          "description": "No Quickstart page in the page proposal"
+        },
+        {
+          "id": "no-troubleshooting",
+          "description": "No Troubleshooting or FAQ page in the page proposal"
+        },
+        {
+          "id": "thin-section-overview",
+          "description": "context-index.md section \"overview\" appears thin (fewer than 5 lines)"
+        },
+        {
+          "id": "no-recent-changes",
+          "description": "No mention of recent commits or changes in context-index.md"
+        }
+      ],
+      "approved": 35
+    }
+  },
+  "docs": {}
 }
