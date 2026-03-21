@@ -8,7 +8,7 @@
   "phase": "ready",
   "status": "active",
   "createdAt": "2026-03-21T05:39:49.254Z",
-  "updatedAt": "2026-03-21T06:11:56.212Z",
+  "updatedAt": "2026-03-21T06:20:55.538Z",
   "gatherState": {
     "status": "approved",
     "report": {
@@ -108,6 +108,23 @@
           {
             "id": "no-lang-tag-api-reference.md",
             "description": "docs/api-reference.md has a fenced code block with no language tag"
+          }
+        ],
+        "judgments": [],
+        "approved": 2
+      }
+    },
+    "introduction.md": {
+      "path": "introduction.md",
+      "pageType": "Introduction",
+      "outcome": "The reader should have a basic idea of the application and how it works. Not too long of a read - just an intro.",
+      "phase": "review",
+      "status": "idle",
+      "report": {
+        "blocking": [
+          {
+            "id": "no-lang-tag-introduction.md",
+            "description": "docs/introduction.md has a fenced code block with no language tag"
           }
         ],
         "judgments": [],
