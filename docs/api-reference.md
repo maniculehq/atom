@@ -50,7 +50,7 @@ type ApiResponse<T = null> = {
 };
 ```
 
-When a request succeeds, `success` is `true` and `response` contains the data. When it fails, `success` is `false`, `response` is `null`, and `message` describes what went wrong. You never need to check HTTP status codes for business logic — check `success` instead.
+When a request succeeds, `success` is `true` and `response` contains the data. When it fails, `success` is `false`, `response` is `null`, and `message` describes what went wrong. For business logic, check `success`, not the HTTP status code.
 
 ---
 
@@ -136,7 +136,7 @@ type ClientPost = {
   image?: string | null;
   createdAt: Date;
   updatedAt: Date;
-  // body is intentionally absent — fetch the full post separately
+  // body is intentionally absent (fetch the full post separately)
 };
 ```
 
@@ -196,11 +196,11 @@ Creates a new user account, starts a session, and sets the `auth_session` cookie
 ```
 
 **Errors:**
-- `"Email not valid."` — email failed regex validation
-- `"Please enter a password."` — password field is empty
-- `"Password must be at least 8 characters long."` — password is present but fewer than 8 characters
-- `"Email already in use."` — MongoDB duplicate key (code 11000)
-- `"Invalid first name."` / `"Invalid last name."` — empty or exceeds 30 characters
+- `"Email not valid."`: email failed regex validation
+- `"Please enter a password."`: password field is empty
+- `"Password must be at least 8 characters long."`: password is present but fewer than 8 characters
+- `"Email already in use."`: MongoDB duplicate key (code 11000)
+- `"Invalid first name."` / `"Invalid last name."`: empty or exceeds 30 characters
 
 New accounts are created with the `"single"` plan. Passwords are hashed with Argon2 + a server-side salt (`HASH_SALT` env var) before storage.
 
@@ -222,7 +222,7 @@ Signs in an existing user and sets the `auth_session` cookie.
 **Response:** `ApiResponse<UserDocument>`
 
 **Errors:**
-- `"Account does not exist."` — no credentials document with that email
+- `"Account does not exist."`: no credentials document with that email
 - `"Password is incorrect."`
 
 ---
@@ -257,7 +257,7 @@ This is the endpoint used by the dashboard SSR layer to hydrate the user on ever
 
 ### `PATCH /api/auth/user/update`
 
-Updates the current user's first or last name. Both fields are optional — only send what you want to change. Requires a valid session cookie.
+Updates the current user's first or last name. Both fields are optional; only send what you want to change. Requires a valid session cookie.
 
 **Request body:**
 
@@ -289,7 +289,7 @@ Permanently deletes the account, all of its projects, all sessions, and the cred
 **Response:** `ApiResponse<null>`
 
 **Errors:**
-- `"Invalid password."` — password confirmation failed
+- `"Invalid password."`: password confirmation failed
 
 ---
 
@@ -348,7 +348,7 @@ Deletes a project and removes it from the user's `UserDocument.projects` array. 
 
 Fetches a single project. Accepts either a session cookie (dashboard) or a Bearer token (programmatic). The auth method determines which path is taken.
 
-**When called with a session cookie:** Query parameter `project_id` is required. Ownership is verified — the request will fail with `"Not authorized."` if the authenticated user is not the project's `creator_uid`.
+**When called with a session cookie:** Query parameter `project_id` is required. Ownership is verified: the request will fail with `"Not authorized."` if the authenticated user is not the project's `creator_uid`.
 
 **When called with a Bearer token:** No query parameters needed. The project is looked up by `project_key` directly.
 
@@ -360,7 +360,7 @@ This endpoint is used internally by the SSR layer (`lib/server/functions/project
 
 ### `GET /api/projects/get/single/client`
 
-The public endpoint used by the `atom-nextjs` SDK. Requires `Authorization: Bearer <project_key>`. Returns a `ClientProject` with a stripped-down post list — no post bodies are included. Use this to render a post listing page.
+The public endpoint used by the `atom-nextjs` SDK. Requires `Authorization: Bearer <project_key>`. Returns a `ClientProject` with a stripped-down post list (no post bodies are included). Use this to render a post listing page.
 
 **Response:** `ApiResponse<ClientProject>`
 
@@ -428,7 +428,7 @@ The `keywords` string is split on commas and stored as a `string[]`. The returne
 
 ### `PATCH /api/posts/update?project_id=&post_id=`
 
-Updates one or more fields of an existing post. All fields are optional — only provided non-empty values are applied.
+Updates one or more fields of an existing post. All fields are optional; only provided non-empty values are applied.
 
 **Query parameters:** `project_id`, `post_id`
 
@@ -463,7 +463,7 @@ Removes a post from its parent project using a `$pull` on the posts sub-document
 
 ### `GET /api/posts/get/single?post_id=`
 
-Fetches a single post by ID. Requires `Authorization: Bearer <project_key>` — this is a public endpoint with no session requirement.
+Fetches a single post by ID. Requires `Authorization: Bearer <project_key>`. This is a public endpoint with no session requirement.
 
 **Query parameter:** `post_id` (UUID)
 
@@ -561,7 +561,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
 | `remarkPlugins` | `any[]` | `[]` | Additional remark plugins passed to `compileMDX` |
 | `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins passed to `compileMDX` |
 
-`remark-gfm` and `rehype-sanitize` are always applied and don't need to be passed in. The component renders inside a `prose` / `lg:prose-xl` Tailwind container — you need `@tailwindcss/typography` in your project for the styles to take effect.
+`remark-gfm` and `rehype-sanitize` are always applied and don't need to be passed in. The component renders inside a `prose` / `lg:prose-xl` Tailwind container, so you need `@tailwindcss/typography` in your project for the styles to take effect.
 
 ### `<AtomBody>` component
 
@@ -633,7 +633,7 @@ import { AtomLoadingSkeleton, AtomArticleSkeleton } from 'atom-nextjs';
 </Suspense>
 ```
 
-Both use `react-loading-skeleton`. `AtomLoadingSkeleton` imports `react-loading-skeleton/dist/skeleton.css` automatically. `AtomArticleSkeleton` does **not** import the CSS — you must import it yourself (`import 'react-loading-skeleton/dist/skeleton.css'`) if you use it. Neither component accepts props.
+Both use `react-loading-skeleton`. `AtomLoadingSkeleton` imports `react-loading-skeleton/dist/skeleton.css` automatically. `AtomArticleSkeleton` does **not** import the CSS; you must import it yourself (`import 'react-loading-skeleton/dist/skeleton.css'`) if you use it. Neither component accepts props.
 
 ---
 
