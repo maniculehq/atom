@@ -6,7 +6,8 @@ Atom is a headless CMS for Next.js. You write and manage posts in the Atom dashb
 
 - **Next.js 14** with the App Router — the SDK components are React Server Components and require the App Router's server-side rendering model.
 - **TailwindCSS** configured in your project — the SDK ships pre-styled components that rely on Tailwind utility classes, including `@tailwindcss/typography` for post body rendering.
-- **Node.js 18+**
+- **Node.js 10+**
+- **No dark mode** — the SDK components use hard-coded light-mode Tailwind classes and are not compatible with dark mode Tailwind configurations.
 
 ---
 
@@ -89,9 +90,14 @@ Create `app/blog/page.tsx`. This page fetches all posts in your project and rend
 ```tsx
 // app/blog/page.tsx
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
+import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 
 export default function BlogPage() {
+  // Calling cookies() opts this route out of Next.js's full-route cache,
+  // so new posts appear without redeploying.
+  const _cookies = cookies();
+
   return (
     <Suspense fallback={<AtomLoadingSkeleton />}>
       <AtomPage
@@ -122,6 +128,7 @@ Create `app/blog/[id]/page.tsx`. This page fetches a single post by its ID and r
 ```tsx
 // app/blog/[id]/page.tsx
 import { Atom, AtomArticleSkeleton, generatePostMetadata } from 'atom-nextjs';
+import { cookies } from 'next/headers';
 import { Suspense } from 'react';
 
 type Props = { params: { id: string } };
@@ -131,6 +138,9 @@ export const generateMetadata = async ({ params }: Props) => {
 };
 
 export default function PostPage({ params }: Props) {
+  // Opts this route out of Next.js's full-route cache so edits to a post appear immediately.
+  const _cookies = cookies();
+
   return (
     <Suspense fallback={<AtomArticleSkeleton />}>
       <Atom
@@ -186,9 +196,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 ```ts
 // Shape of each entry returned by generateSitemap
 [
-  { url: 'https://yourdomain.com/blog/abc123', lastModified: Date, priority: 0.5 },
-  // ... one per published post
-  { url: 'https://yourdomain.com/blog', lastModified: Date, priority: 0.6 },
+  { url: 'https://yourdomain.com/blog/abc123', lastModified: new Date('...'), priority: 0.5 },
+  // ... one entry per post, lastModified is derived from the post's updatedAt timestamp
+  { url: 'https://yourdomain.com/blog', lastModified: new Date('...'), priority: 0.6 },
 ]
 ```
 
