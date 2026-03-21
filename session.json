@@ -8,7 +8,7 @@
   "phase": "ready",
   "status": "active",
   "createdAt": "2026-03-21T05:39:49.254Z",
-  "updatedAt": "2026-03-21T05:45:20.005Z",
+  "updatedAt": "2026-03-21T06:09:40.273Z",
   "gatherState": {
     "status": "approved",
     "report": {
@@ -80,9 +80,39 @@
     }
   },
   "docs": {
-    "Let's write the getting started page..md": {
-      "path": "docs/Let's write the getting started page..md",
-      "status": "complete"
+    "Let's write the getting started page.": {
+      "path": "Let's write the getting started page.",
+      "pageType": "Quickstart",
+      "outcome": "They should be able to have a grasp of how the system works and be able to quickly use the atom nextjs package.",
+      "phase": "review",
+      "status": "idle",
+      "report": {
+        "blocking": [
+          {
+            "id": "missing-page-Let's write the getting started page..md",
+            "description": "docs/Let's write the getting started page..md does not exist"
+          }
+        ],
+        "judgments": [],
+        "approved": 0
+      }
+    },
+    "api-reference.md": {
+      "path": "api-reference.md",
+      "pageType": "API Reference",
+      "outcome": "Should be able to understand the entire API structure and able to interact with it on their own through the atom source code.",
+      "phase": "review",
+      "status": "idle",
+      "report": {
+        "blocking": [
+          {
+            "id": "no-lang-tag-api-reference.md",
+            "description": "docs/api-reference.md has a fenced code block with no language tag"
+          }
+        ],
+        "judgments": [],
+        "approved": 2
+      }
     }
   }
 }
