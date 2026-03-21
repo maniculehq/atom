@@ -20,7 +20,7 @@ atom-bHutpCKwbU9wRsPuzfEnqKbmQCRQY+NxYQEZkUvV65E=
 
 You store that key as an environment variable in your Next.js app, then pass it to the SDK components:
 
-```bash
+```dotenv
 # .env.local
 ATOM_PROJECT_KEY=atom-bHutpCKwbU9wRsPuzfEnqKbmQCRQY+NxYQEZkUvV65E=
 ```
