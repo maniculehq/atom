@@ -72,7 +72,7 @@ You don't call this directly. The dashboard's client helpers in `lib/client/` us
 
 Routes meant to be called from a customer's blog accept `Authorization: Bearer <project_key>`. The project key looks like `atom-<32-byte base64 string>` and is generated when you create a project. Find it in the Atom dashboard under your project settings.
 
-```
+```http
 Authorization: Bearer atom-abc123...
 ```
 
