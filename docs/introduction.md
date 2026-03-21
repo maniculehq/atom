@@ -14,7 +14,7 @@ Atom has two distinct pieces: a hosted dashboard where you manage content, and a
 
 When you create a project in the Atom dashboard, Atom generates a unique key. The key is `"atom-"` followed by 44 base64-encoded characters, for example:
 
-```
+```text
 atom-bHutpCKwbU9wRsPuzfEnqKbmQCRQY+NxYQEZkUvV65E=
 ```
 
