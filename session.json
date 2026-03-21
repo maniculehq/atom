@@ -79,5 +79,10 @@
       "approved": 35
     }
   },
-  "docs": {}
+  "docs": {
+    "Let's write the getting started page..md": {
+      "path": "docs/Let's write the getting started page..md",
+      "status": "complete"
+    }
+  }
 }
