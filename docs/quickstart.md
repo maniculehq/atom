@@ -40,7 +40,7 @@ Then add your project key as an environment variable. Create or update your `.en
 ATOM_PROJECT_KEY=atom-abc123xyz...
 ```
 
-This variable is only read on the server, so the key is never sent to the browser.
+This variable is used by Server Components and API routes. Do not pass it to Client Components, as that would expose it to the browser.
 
 ## 4. Add a blog listing page
 
@@ -50,6 +50,7 @@ Create `app/blog/page.tsx`. The `AtomPage` component fetches all posts in your p
 |---|---|---|
 | `projectKey` | `string` | Your project key from the Atom dashboard |
 | `baseRoute` | `string` | The URL prefix for post links (e.g. `"/blog"`) |
+| `title` | `boolean` | Whether to render the project title above the card grid. Defaults to `true`. |
 
 Calling `cookies()` opts this route out of Next.js's default cache, so visitors always see your latest posts rather than a stale snapshot.
 
@@ -82,6 +83,8 @@ Create `app/blog/[id]/page.tsx`. The `Atom` component fetches and renders a sing
 |---|---|---|
 | `projectKey` | `string` | Your project key from the Atom dashboard |
 | `postId` | `string` | The post ID from the URL — maps to `params.id` |
+| `remarkPlugins` | `any[]` | Optional. Additional remark plugins to pass into the MDX compiler. |
+| `rehypePlugins` | `any[]` | Optional. Additional rehype plugins to pass into the MDX compiler. |
 
 ```tsx
 import { Atom, AtomArticleSkeleton, generatePostMetadata } from 'atom-nextjs';
@@ -91,7 +94,7 @@ import { cookies } from 'next/headers';
 type Props = { params: { id: string } };
 
 export async function generateMetadata({ params }: Props) {
-  return generatePostMetadata(process.env.ATOM_PROJECT_KEY!, params.id);
+  return await generatePostMetadata(process.env.ATOM_PROJECT_KEY!, params.id);
 }
 
 export default function PostPage({ params }: Props) {
@@ -162,10 +165,10 @@ import { getProject, getPost } from 'atom-nextjs';
 const project = await getProject(process.env.ATOM_PROJECT_KEY!);
 
 // Returns ApiResponse<Post>
-// Post: { id, title, author, teaser, body, image, keywords, createdAt, updatedAt }
+// Post: { id, title, author, teaser, body, image: string | null, keywords?: string[], creator_uid, createdAt, updatedAt }
 const post = await getPost(process.env.ATOM_PROJECT_KEY!, postId);
 ```
 
 **Extend the MDX pipeline** by passing `remarkPlugins` or `rehypePlugins` props to the `Atom` component if you need syntax highlighting, custom directives, or other MDX transformations.
 
-**Build a custom article template** by importing `AtomBody` directly. Pass it a `body` string — the raw MDX from `getPost` — and it will compile and render it inside whatever layout you provide.
+**Build a custom article template** by importing `AtomBody` directly. It accepts `body` (the raw MDX string from `getPost`), an optional `className` for the wrapper `<div>`, and the same `remarkPlugins` / `rehypePlugins` options as `Atom`.
