@@ -2,6 +2,8 @@
 
 Get a working blog inside your Next.js app in under ten minutes, pulling content from the Atom dashboard.
 
+**Steps at a glance:** [Create account](#1-create-an-account-and-project) → [Write a post](#2-write-your-first-post) → [Install the SDK](#3-install-the-sdk) → [Add a listing page](#4-add-a-blog-listing-page) → [Add a post page](#5-add-an-individual-post-page) → [Go live](#verify-your-blog-is-live)
+
 ## Prerequisites
 
 - A Next.js 14 project using the App Router
@@ -10,11 +12,11 @@ Get a working blog inside your Next.js app in under ten minutes, pulling content
 
 ---
 
-## 1. Create an account and set up a project
+## 1. Create an account and project
 
 Go to [cmsatom.netlify.app/signup](https://cmsatom.netlify.app/signup) and create a free account. After signing in you land on the Projects page.
 
-Click **Create project** and give it a name. Your project is a container for all your blog posts. Once created, open it and you will see your **project key** in the sidebar. It looks like this:
+Click **Create project** and give it a name. Your project is a container for all your blog posts. Once created, open it and you will see your **project key** in the sidebar — a Bearer token that identifies your project to the Atom API. It looks like this:
 
 ```
 atom-abc123xyz...
@@ -26,7 +28,7 @@ Copy it. You will need it in the next step.
 
 Inside your new project, click **Create post**. Fill in the title, author, and teaser, then write the body using the MDX editor. When you save, the post is immediately available via the Atom API. The post ID is generated automatically; you will use it later to link directly to individual posts.
 
-## 3. Install the SDK in your Next.js app
+## 3. Install the SDK
 
 In your own Next.js project, install `atom-nextjs`:
 
@@ -44,7 +46,14 @@ This variable is only read on the server, so the key is never sent to the browse
 
 ## 4. Add a blog listing page
 
-Create `app/blog/page.tsx`. The `AtomPage` component fetches all posts in your project and renders them as a card grid. Pass it your project key and the base URL of your blog so the cards link to the right place.
+Create `app/blog/page.tsx`. The `AtomPage` component fetches all posts in your project and renders them as a card grid.
+
+| Prop | Type | Description |
+|---|---|---|
+| `projectKey` | `string` | Your project key from the Atom dashboard |
+| `baseRoute` | `string` | The URL prefix for post links (e.g. `"/blog"`) |
+
+Calling `cookies()` opts this route out of Next.js's default cache, so visitors always see your latest posts rather than a stale snapshot.
 
 ```tsx
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
@@ -52,8 +61,6 @@ import { Suspense } from 'react';
 import { cookies } from 'next/headers';
 
 export default function BlogPage() {
-  // Reading cookies opts this route out of Next.js caching,
-  // so visitors always see your latest posts.
   const _cookies = cookies();
 
   return (
@@ -72,6 +79,11 @@ The `Suspense` boundary shows a skeleton placeholder while the posts load. `Atom
 ## 5. Add an individual post page
 
 Create `app/blog/[id]/page.tsx`. The `Atom` component fetches and renders a single post, including the title, cover image, author, date, and the full MDX body.
+
+| Prop | Type | Description |
+|---|---|---|
+| `projectKey` | `string` | Your project key from the Atom dashboard |
+| `postId` | `string` | The post ID from the URL — maps to `params.id` |
 
 ```tsx
 import { Atom, AtomArticleSkeleton, generatePostMetadata } from 'atom-nextjs';
@@ -100,7 +112,7 @@ export default function PostPage({ params }: Props) {
 
 `generatePostMetadata` automatically populates `<title>`, `description`, `keywords`, and `authors` from the post data in Atom, so your `<head>` stays in sync with your content without any extra work.
 
-## 6. (Optional) Keep your sitemap up to date automatically
+## 6. Keep your sitemap up to date (optional)
 
 Create `app/sitemap.ts` and use `generateSitemap` to produce sitemap entries for every post in your project. Combine it with your own static routes:
 
@@ -127,7 +139,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 Each entry includes the post's `lastModified` date and a default priority of `0.5`. The blog index route is also included at priority `0.6`. Whenever you publish or edit a post in the Atom dashboard, the next sitemap request picks up the change automatically.
 
-## Verify it works
+## Verify your blog is live
 
 Start your dev server:
 
@@ -137,10 +149,25 @@ npm run dev
 
 Open `http://localhost:3000/blog`. You should see your post listed as a card. Click it and the full article renders at `http://localhost:3000/blog/<post-id>`. If the post body contains MDX (components, callouts, etc.), it will be compiled and rendered on the server.
 
-If the page loads but no posts appear, double-check that `ATOM_PROJECT_KEY` in `.env.local` matches the key shown in your Atom dashboard project, and that the project contains at least one saved post.
+> **Troubleshooting:** If the page loads but no posts appear, check that `ATOM_PROJECT_KEY` in `.env.local` exactly matches the key shown in your Atom dashboard, and that the project contains at least one saved post.
 
 ## What's next
 
-- **Call the API directly**: `getProject(projectKey)` and `getPost(projectKey, postId)` return raw data if you want to build a fully custom layout instead of using the built-in components.
-- **Custom MDX rendering**: `Atom` accepts `remarkPlugins` and `rehypePlugins` props if you need to extend the MDX pipeline.
-- **AtomBody for custom layouts**: import `AtomBody` directly and pass it a `body` string to render MDX inside your own article template.
+**Call the API directly** if you want to build a fully custom layout instead of using the pre-built components. `getProject` and `getPost` return typed response objects you can shape however you like:
+
+```ts
+import { getProject, getPost } from 'atom-nextjs';
+
+// Returns ApiResponse<ClientProject>
+// ClientProject: { id, title, createdAt, updatedAt, posts: ClientPost[] }
+// ClientPost:    { id, title, teaser, author, image, createdAt, updatedAt }
+const project = await getProject(process.env.ATOM_PROJECT_KEY!);
+
+// Returns ApiResponse<Post>
+// Post: { id, title, author, teaser, body, image, keywords, createdAt, updatedAt }
+const post = await getPost(process.env.ATOM_PROJECT_KEY!, postId);
+```
+
+**Extend the MDX pipeline** by passing `remarkPlugins` or `rehypePlugins` props to the `Atom` component if you need syntax highlighting, custom directives, or other MDX transformations.
+
+**Build a custom article template** by importing `AtomBody` directly. Pass it a `body` string — the raw MDX from `getPost` — and it will compile and render it inside whatever layout you provide.
