@@ -1,6 +1,6 @@
 # Atom — Headless CMS for Next.js
 
-Atom is a headless CMS built specifically for Next.js. You write and manage your content — projects and posts in Markdown/MDX — through the Atom dashboard, then pull that content into your own Next.js site using the `atom-nextjs` npm package. No custom API calls, no data-fetching boilerplate: just React server components that do the work for you.
+Atom is a headless CMS built specifically for Next.js. You write and manage your content — projects and posts in Markdown/MDX — through the Atom dashboard, then pull that content into your own Next.js site using the `atom-nextjs` npm package. The SDK provides async React server components that fetch posts from the Atom API, compile MDX, and render the result — no custom API calls or data-fetching boilerplate required.
 
 ## Understand projects and project keys
 
@@ -13,8 +13,10 @@ Before writing any code, create an account and set up your first project at the 
 **Step 1 — Install the SDK:**
 
 ```bash
-npm install atom-nextjs
+npm install atom-nextjs@latest
 ```
+
+> **Tailwind CSS required.** The SDK's components use Tailwind utility classes for layout and typography. Your Next.js project must have [Tailwind CSS configured](https://tailwindcss.com/docs/guides/nextjs) or the rendered output will be unstyled.
 
 **Step 2 — Add your project key to `.env.local`:**
 
@@ -45,10 +47,11 @@ export default function Blog() {
 }
 ```
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `projectKey` | `string` | Your project's Bearer token, copied from the dashboard |
-| `baseRoute` | `string` | The URL prefix used to build each post's link, e.g. `"/blog"` |
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `projectKey` | `string` | Yes | — | Your project's Bearer token, copied from the dashboard |
+| `baseRoute` | `string` | Yes | — | The URL prefix used to build each post's link, e.g. `"/blog"` |
+| `title` | `boolean` | No | `true` | Whether to render the project name as an `<h1>` above the post grid |
 
 `Atom` fetches and renders a single post — title, cover image, author, date, and the compiled MDX body. Use it for individual post pages:
 
@@ -69,7 +72,9 @@ export default function BlogPost({ params }: { params: { id: string } }) {
 }
 ```
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `projectKey` | `string` | Your project's Bearer token, copied from the dashboard |
-| `postId` | `string` | The ID of the post to fetch, typically sourced from route params |
+| Prop | Type | Required | Default | Description |
+|------|------|----------|---------|-------------|
+| `projectKey` | `string` | Yes | — | Your project's Bearer token, copied from the dashboard |
+| `postId` | `string` | Yes | — | The ID of the post to fetch, typically sourced from route params |
+| `remarkPlugins` | `any[]` | No | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins passed to the MDX compiler. `remark-gfm` is always included. |
+| `rehypePlugins` | `any[]` | No | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins passed to the MDX compiler. `rehype-sanitize` is always included. |
