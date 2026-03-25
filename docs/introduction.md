@@ -8,7 +8,7 @@ The system has two parts that talk to each other through an API key.
 
 **The Atom dashboard** is where you create a *project* (a named collection of posts), write content in a markdown editor, and publish. Each project gets a unique `project_key` that acts as a Bearer token for your API access.
 
-**The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components — `AtomPage` to list posts and `Atom` to display a single post — pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
+**The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components (`AtomPage` to list posts and `Atom` to display a single post), pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
 
 ```bash
 npm install atom-nextjs
