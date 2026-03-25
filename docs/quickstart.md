@@ -24,7 +24,7 @@ Copy it. You will need it in the next step.
 
 ## 2. Write your first post
 
-Inside your new project, click **Create post**. Fill in the title, author, and teaser, then write the body using the MDX editor. When you save, the post is immediately available via the Atom API. The post ID is generated automatically — you will use it later to link directly to individual posts.
+Inside your new project, click **Create post**. Fill in the title, author, and teaser, then write the body using the MDX editor. When you save, the post is immediately available via the Atom API. The post ID is generated automatically; you will use it later to link directly to individual posts.
 
 ## 3. Install the SDK in your Next.js app
 
@@ -141,6 +141,6 @@ If the page loads but no posts appear, double-check that `ATOM_PROJECT_KEY` in `
 
 ## What's next
 
-- **Call the API directly** — `getProject(projectKey)` and `getPost(projectKey, postId)` return raw data if you want to build a fully custom layout instead of using the built-in components.
-- **Custom MDX rendering** — `Atom` accepts `remarkPlugins` and `rehypePlugins` props if you need to extend the MDX pipeline.
-- **AtomBody for custom layouts** — import `AtomBody` directly and pass it a `body` string to render MDX inside your own article template.
+- **Call the API directly**: `getProject(projectKey)` and `getPost(projectKey, postId)` return raw data if you want to build a fully custom layout instead of using the built-in components.
+- **Custom MDX rendering**: `Atom` accepts `remarkPlugins` and `rehypePlugins` props if you need to extend the MDX pipeline.
+- **AtomBody for custom layouts**: import `AtomBody` directly and pass it a `body` string to render MDX inside your own article template.
