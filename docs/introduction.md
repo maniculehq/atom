@@ -1,53 +1,47 @@
 # Introduction
 
-Atom is a headless CMS built specifically for Next.js. You write and manage your blog posts in the Atom dashboard, and a small companion package (`atom-nextjs`) renders them inside your own Next.js app — with no lock-in on layout, styling, or routing.
+Atom is a headless CMS built specifically for Next.js. The idea is simple: you write and manage blog posts in the Atom dashboard, then drop a couple of React server components into your own Next.js site to render them. No custom API layer to build, no data-fetching logic to wire up yourself.
 
-## How the two parts fit together
+The system has two parts that work together.
 
-The system has two parts that communicate through an API key.
+## The Atom Dashboard
 
-**The Atom dashboard** is where you create a *project* — a named collection of posts. You write content in a markdown editor, publish it, and the dashboard issues a unique `project_key` for that project. This key acts as a Bearer token (an `Authorization` header value) that authenticates your app's requests to the Atom API.
+The dashboard lives at [cmsatom.netlify.app](https://cmsatom.netlify.app). You sign up, create a **project** (a named collection of posts), and start writing. Each post has a title, author, teaser, optional cover image, keywords, and a Markdown body. The editor is built into the dashboard — no external tools required.
 
-**The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components — `AtomPage` to list posts and `Atom` to display a single post — pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
+When you create a project, Atom generates a unique **project key** for it. This key is a Bearer token your Next.js site uses to fetch your content. Keep it in an environment variable; it's the only credential the SDK needs.
+
+## The `atom-nextjs` SDK
+
+The SDK is a small npm package you install in your own Next.js application:
 
 ```bash
 npm install atom-nextjs
 ```
 
-From there, a blog route is two files. Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`) and reference it in each component:
+It exports a set of async React server components and utility functions that talk directly to the Atom API using your project key. Because they run server-side, the key is never exposed to the browser.
 
-```tsx
-// app/blog/page.tsx — renders a linked card list of all posts in your project
-import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
-import { Suspense } from 'react';
+Here's what the package exports and what each piece does:
 
-export default function Blog() {
-  return (
-    <Suspense fallback={<AtomLoadingSkeleton />}>
-      <AtomPage baseRoute="/blog" projectKey={process.env.ATOM_PROJECT_KEY!} />
-    </Suspense>
-  );
-}
-```
+**Components**
 
-```tsx
-// app/blog/[id]/page.tsx — fetches and renders a single post by its ID
-import { Atom, AtomArticleSkeleton } from 'atom-nextjs';
-import { Suspense } from 'react';
+- `AtomPage` — renders a list of all posts in your project. Pass it your project key and the base route of your blog (e.g. `/blog`), and it fetches the project data and renders a card grid.
+- `Atom` — renders a single post. Pass it your project key and the post ID from the URL, and it fetches and displays the full article with title, cover image, author, date, and formatted Markdown body.
+- `AtomBody` — the MDX renderer used internally by `Atom`. You can use it directly if you want to render post content inside your own layout.
+- `AtomPostCard` — the individual card component used by `AtomPage`. Import it separately if you want to build a custom listing layout.
+- `AtomLoadingSkeleton` / `AtomArticleSkeleton` — loading state placeholders you can use in `Suspense` boundaries while posts load.
 
-export default function BlogPage({ params }: { params: { id: string } }) {
-  return (
-    <Suspense fallback={<AtomArticleSkeleton />}>
-      <Atom projectKey={process.env.ATOM_PROJECT_KEY!} postId={params.id} />
-    </Suspense>
-  );
-}
-```
+**Data-fetching utilities**
 
-`AtomPage` and `Atom` are async server components that fetch from the Atom API. Wrapping them in `<Suspense>` lets Next.js stream the page immediately and show a skeleton while the fetch is in progress. Without it, rendering blocks until the fetch completes and there is no loading state.
+- `getProject(projectKey)` — fetches project metadata and a list of post summaries (id, title, teaser, author, dates, image).
+- `getPost(projectKey, postId)` — fetches the full content of a single post, including the Markdown body.
 
-Your site stays in full control of layout, styling, and routing. Atom handles the content.
+**Next.js helpers**
 
-## What Atom is — and isn't — responsible for
+- `generatePostMetadata(projectKey, postId)` — returns a Next.js `Metadata` object populated from the post's title, teaser, keywords, and author. Drop it straight into `generateMetadata` in a page file.
+- `generateSitemap(projectKey, blogRoute)` — returns sitemap entries for all posts in your project. Use it inside `sitemap.ts` to keep your sitemap in sync with your content automatically.
 
-Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else.
+## How it fits together
+
+When a visitor loads your blog, `AtomPage` or `Atom` runs on the server, calls the Atom API with your project key, and returns fully rendered HTML. There's no client-side data fetching for the content itself. The API is rate-limited to 30 requests per minute per IP.
+
+The short version: you manage content in one place (the Atom dashboard), and your Next.js site stays focused on presentation. Adding a blog to an existing Next.js project is a matter of two new route files.
