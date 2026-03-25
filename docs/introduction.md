@@ -18,21 +18,33 @@ From there, a blog route is two files. Store your project key in an environment 
 
 ```tsx
 // app/blog/page.tsx — renders a linked card list of all posts in your project
-import { AtomPage } from 'atom-nextjs';
+import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
+import { Suspense } from 'react';
 
 export default function Blog() {
-  return <AtomPage baseRoute="/blog" projectKey={process.env.ATOM_PROJECT_KEY!} />;
+  return (
+    <Suspense fallback={<AtomLoadingSkeleton />}>
+      <AtomPage baseRoute="/blog" projectKey={process.env.ATOM_PROJECT_KEY!} />
+    </Suspense>
+  );
 }
 ```
 
 ```tsx
 // app/blog/[id]/page.tsx — fetches and renders a single post by its ID
-import { Atom } from 'atom-nextjs';
+import { Atom, AtomArticleSkeleton } from 'atom-nextjs';
+import { Suspense } from 'react';
 
-export default async function BlogPage({ params }: { params: { id: string } }) {
-  return <Atom projectKey={process.env.ATOM_PROJECT_KEY!} postId={params.id} />;
+export default function BlogPage({ params }: { params: { id: string } }) {
+  return (
+    <Suspense fallback={<AtomArticleSkeleton />}>
+      <Atom projectKey={process.env.ATOM_PROJECT_KEY!} postId={params.id} />
+    </Suspense>
+  );
 }
 ```
+
+`AtomPage` and `Atom` are async server components that fetch from the Atom API. Wrapping them in `<Suspense>` lets Next.js stream the page immediately and show a skeleton while the fetch is in progress. Without it, rendering blocks until the fetch completes and there is no loading state.
 
 Your site stays in full control of layout, styling, and routing. Atom handles the content.
 
