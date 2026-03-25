@@ -6,7 +6,7 @@ The system has two parts that work together.
 
 ## The Atom Dashboard
 
-The dashboard lives at [cmsatom.netlify.app](https://cmsatom.netlify.app). You sign up, create a **project** (a named collection of posts), and start writing. Each post has a title, author, teaser, optional cover image, keywords, and a Markdown body. The editor is built into the dashboard — no external tools required.
+The dashboard lives at [cmsatom.netlify.app](https://cmsatom.netlify.app). You sign up, create a **project** (a named collection of posts), and start writing. Each post has a title, author, teaser, optional cover image, keywords, and a Markdown body. The editor is built into the dashboard, no external tools required.
 
 When you create a project, Atom generates a unique **project key** for it. This key is a Bearer token your Next.js site uses to fetch your content. Keep it in an environment variable; it's the only credential the SDK needs.
 
@@ -24,21 +24,21 @@ Here's what the package exports and what each piece does:
 
 **Components**
 
-- `AtomPage` — renders a list of all posts in your project. Pass it your project key and the base route of your blog (e.g. `/blog`), and it fetches the project data and renders a card grid.
-- `Atom` — renders a single post. Pass it your project key and the post ID from the URL, and it fetches and displays the full article with title, cover image, author, date, and formatted Markdown body.
-- `AtomBody` — the MDX renderer used internally by `Atom`. You can use it directly if you want to render post content inside your own layout.
-- `AtomPostCard` — the individual card component used by `AtomPage`. Import it separately if you want to build a custom listing layout.
-- `AtomLoadingSkeleton` / `AtomArticleSkeleton` — loading state placeholders you can use in `Suspense` boundaries while posts load.
+- `AtomPage`: renders a list of all posts in your project. Pass it your project key and the base route of your blog (e.g. `/blog`), and it fetches the project data and renders a card grid.
+- `Atom`: renders a single post. Pass it your project key and the post ID from the URL, and it fetches and displays the full article with title, cover image, author, date, and formatted Markdown body.
+- `AtomBody`: the MDX renderer used internally by `Atom`. You can use it directly if you want to render post content inside your own layout.
+- `AtomPostCard`: the individual card component used by `AtomPage`. Import it separately if you want to build a custom listing layout.
+- `AtomLoadingSkeleton` / `AtomArticleSkeleton`: loading state placeholders you can use in `Suspense` boundaries while posts load.
 
 **Data-fetching utilities**
 
-- `getProject(projectKey)` — fetches project metadata and a list of post summaries (id, title, teaser, author, dates, image).
-- `getPost(projectKey, postId)` — fetches the full content of a single post, including the Markdown body.
+- `getProject(projectKey)`: fetches project metadata and a list of post summaries (id, title, teaser, author, dates, image).
+- `getPost(projectKey, postId)`: fetches the full content of a single post, including the Markdown body.
 
 **Next.js helpers**
 
-- `generatePostMetadata(projectKey, postId)` — returns a Next.js `Metadata` object populated from the post's title, teaser, keywords, and author. Drop it straight into `generateMetadata` in a page file.
-- `generateSitemap(projectKey, blogRoute)` — returns sitemap entries for all posts in your project. Use it inside `sitemap.ts` to keep your sitemap in sync with your content automatically.
+- `generatePostMetadata(projectKey, postId)`: returns a Next.js `Metadata` object populated from the post's title, teaser, keywords, and author. Drop it straight into `generateMetadata` in a page file.
+- `generateSitemap(projectKey, blogRoute)`: returns sitemap entries for all posts in your project. Use it inside `sitemap.ts` to keep your sitemap in sync with your content automatically.
 
 ## How it fits together
 
