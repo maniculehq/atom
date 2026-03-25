@@ -14,9 +14,7 @@ Get a working blog inside your Next.js app in under ten minutes, pulling content
 
 ## 1. Create an account and project
 
-Go to [cmsatom.netlify.app/signup](https://cmsatom.netlify.app/signup) and create a free account. After signing in you land on the Projects page.
-
-Click **Create project** and give it a name. Your project is a container for all your blog posts. Once created, open it and you will see your **project key** in the sidebar — a Bearer token that identifies your project to the Atom API. It looks like this:
+Go to [cmsatom.netlify.app/signup](https://cmsatom.netlify.app/signup), create a free account, then click **Create project**. Open it and you will see your **project key** in the sidebar — a Bearer token that identifies your project to the Atom API:
 
 ```
 atom-abc123xyz...
