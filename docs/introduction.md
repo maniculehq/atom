@@ -5,7 +5,9 @@ Atom is a headless CMS built for Next.js. You write and manage blog posts in the
 ## How it works
 
 1. **Create a project** in the Atom dashboard. Each project holds a collection of blog posts and has a unique project key (a string starting with `atom-` that authenticates SDK requests).
+
 2. **Install the SDK** (`atom-nextjs`) in your Next.js app.
+
 3. **Drop in two components** — `AtomPage` for your blog list and `Atom` for individual posts — and pass them your project key. The SDK handles fetching, Markdown rendering, and metadata generation.
 
 That's the whole integration. Your content lives in Atom, your site stays in your repo, and the SDK connects the two at render time using server components.
