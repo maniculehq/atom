@@ -14,8 +14,10 @@ The following questions were posed to the developer. Each one surfaced a real am
 
 1. **Page intent** — What should this test page cover: a testing guide, a pipeline verification page, or a feature test? This determined the overall shape of the document.
 2. **Canonical deployment URL** — The codebase references both `cmsatom.netlify.app` and `atomcms.vercel.app`. Which is the primary URL for documentation? Getting this wrong would send readers to a stale or secondary deployment.
+
 3. **SDK stability** — Whether `atom-nextjs` at v0.3.1 should carry a "beta" disclaimer. Pre-1.0 libraries often have breaking changes, and readers need to know what to expect.
 4. **Target audience** — Whether docs target SDK consumers, self-hosting developers, or both. Audience scope affects every page's tone, depth, and assumed knowledge.
+
 5. **Plans and pricing** — Whether to document the disabled "startup" and "business" plans, or only the functional free "single" plan. Documenting disabled features risks confusing users.
 6. **Self-hosting** — Whether to include self-hosting documentation for the dashboard. This is a significant scope decision that would add multiple new pages.
 7. **Bruno API collection** — Whether the Bruno collection in the repo should be documented as a developer tool. It's present in the codebase but not referenced anywhere in existing docs.
