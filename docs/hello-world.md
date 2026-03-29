@@ -21,42 +21,102 @@ In your `.env.local` file:
 ATOM_PROJECT_KEY=atom-your-key-here
 ```
 
+Your project key authenticates requests from the SDK to the Atom API. It's safe in a server-side environment variable because `AtomPage` and `Atom` are both async server components — the key never reaches the browser.
+
 ## 3. Render a blog listing page
 
 Create `app/blog/page.tsx` with the `AtomPage` component. It's an async server component that fetches your posts and renders them automatically.
 
 ```tsx
-import { AtomPage } from "atom-nextjs";
+import { AtomPage, AtomLoadingSkeleton } from "atom-nextjs";
+import { Suspense } from "react";
 
 export default function Blog() {
   return (
-    <AtomPage
-      baseRoute="/blog"
-      projectKey={process.env.ATOM_PROJECT_KEY!}
-    />
+    <Suspense fallback={<AtomLoadingSkeleton />}>
+      <AtomPage
+        baseRoute="/blog"
+        projectKey={process.env.ATOM_PROJECT_KEY!}
+      />
+    </Suspense>
   );
 }
 ```
 
-`baseRoute` tells Atom where your blog lives so post links point to the right place (for example, `/blog/post-id`).
+Wrapping `AtomPage` in `<Suspense>` lets Next.js stream the shell immediately while posts load. `AtomLoadingSkeleton` provides a built-in loading state, though you can substitute your own component.
+
+### AtomPage props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | Your Atom project key (required). |
+| `baseRoute` | `string` | — | URL prefix for post links. A post with id `my-first-post` links to `{baseRoute}/my-first-post`. |
+| `title` | `boolean` | `true` | Whether to display the project title as an `<h1>` above the post list. |
 
 ## 4. Render a single post
 
 Create `app/blog/[id]/page.tsx` to display individual posts using the `Atom` component:
 
 ```tsx
-import { Atom } from "atom-nextjs";
+import { Atom, AtomArticleSkeleton } from "atom-nextjs";
+import { Suspense } from "react";
 
 export default function BlogPost({ params }: { params: { id: string } }) {
   return (
-    <Atom
-      projectKey={process.env.ATOM_PROJECT_KEY!}
-      postId={params.id}
-    />
+    <Suspense fallback={<AtomArticleSkeleton />}>
+      <Atom
+        projectKey={process.env.ATOM_PROJECT_KEY!}
+        postId={params.id}
+      />
+    </Suspense>
   );
 }
 ```
 
+The `Atom` component fetches a single post by its `postId`, then renders the title, author, date, cover image (if set), and the markdown body compiled to HTML.
+
+### Atom props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | Your Atom project key (required). |
+| `postId` | `string` | — | The id of the post to render (required). Comes from the dynamic route segment. |
+| `remarkPlugins` | `any[]` | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins for markdown processing. |
+| `rehypePlugins` | `any[]` | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins for HTML post-processing. |
+
+## 5. Add SEO metadata (optional)
+
+Use `generatePostMetadata` in your single-post page to set the `<title>`, description, author, and keywords from your post data:
+
+```tsx
+import { Atom, AtomArticleSkeleton, generatePostMetadata } from "atom-nextjs";
+import { Suspense } from "react";
+import { Metadata } from "next";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: { id: string };
+}): Promise<Metadata> {
+  return generatePostMetadata(process.env.ATOM_PROJECT_KEY!, params.id);
+}
+
+export default function BlogPost({ params }: { params: { id: string } }) {
+  return (
+    <Suspense fallback={<AtomArticleSkeleton />}>
+      <Atom
+        projectKey={process.env.ATOM_PROJECT_KEY!}
+        postId={params.id}
+      />
+    </Suspense>
+  );
+}
+```
+
+`generatePostMetadata` returns a Next.js `Metadata` object with `title`, `description` (from the post teaser), `keywords`, and `authors` populated from your post content.
+
 ## Verify it works
 
 Run `npm run dev`, open `http://localhost:3000/blog`, and you should see your posts listed. Click one to view the full article.
+
+If the page renders the project title and post cards, everything is wired up correctly. If you see an error message instead, double-check that your `ATOM_PROJECT_KEY` in `.env.local` matches the key shown in the Atom dashboard for your project.
