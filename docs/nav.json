@@ -1,6 +1,7 @@
 {
   "nav": [
     { "title": "Introduction", "path": "introduction" },
+    { "title": "Quickstart", "path": "quickstart" },
     { "title": "omak", "path": "omak" }
   ]
 }
