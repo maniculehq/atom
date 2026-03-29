@@ -20,6 +20,9 @@ Additional questions focused on documentation scope:
 
 4. **Target audience** — Whether docs target SDK consumers, self-hosting developers, or both, since audience scope affects every page's tone and depth.
 5. **Plans and pricing** — Whether to document the disabled "startup" and "business" plans or only the functional free "single" plan, to avoid confusing users.
+
+Finally, questions about feature coverage:
+
 6. **Self-hosting** — Whether to include self-hosting documentation for the dashboard, a significant scope decision that would add multiple new pages.
 7. **Bruno API collection** — Whether the Bruno collection in the repo should be documented as a developer tool, since it's present in the codebase but not referenced in existing docs.
 
