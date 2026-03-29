@@ -1,6 +1,6 @@
 # Quickstart
 
-Go from zero to a working blog in your Next.js app, with content managed through the Atom dashboard.
+Go from zero to a working blog in your Next.js app, with content managed through the Atom dashboard. By the end of this guide, you'll have a blog listing page and individual post pages powered by the Atom CMS — all in about 15 minutes.
 
 ## Prerequisites
 
@@ -16,11 +16,11 @@ Head to [cmsatom.netlify.app/signup](https://cmsatom.netlify.app/signup) and sig
 
 Click **Create Project**, give it a name (for example, "My Blog"), and confirm. The project opens in the editor view.
 
-In the left sidebar, click **Copy project key**. This key is how the SDK authenticates requests to the Atom API. You'll need it in the next step.
+In the left sidebar, click **Copy project key**. This key is how the SDK authenticates requests to the Atom API — it's sent as a Bearer token in every request the SDK makes on your behalf. You'll need it in the next step.
 
 ## 3. Write your first post
 
-While still in the project editor, click **Create Post** at the bottom of the sidebar. Fill in the title, author name, teaser (a short summary), and body content using markdown. Optionally add a cover image URL and comma-separated keywords. Save the post.
+While still in the project editor, click **Create Post** at the bottom of the sidebar. Fill in the title, author name, teaser (a short summary shown on post cards), and body content using markdown. Optionally add a cover image URL and comma-separated keywords. Save the post.
 
 You now have content ready to fetch. Time to wire it up in your Next.js app.
 
@@ -36,7 +36,7 @@ npm install atom-nextjs @tailwindcss/typography
 
 Add your project key to `.env.local` so it stays out of source control:
 
-```
+```env
 ATOM_PROJECT_KEY=atom-xxxxxxxxxxxx
 ```
 
@@ -44,13 +44,15 @@ Replace `atom-xxxxxxxxxxxx` with the key you copied in step 2.
 
 Because the SDK components are server components, this variable is only read on the server. It never reaches the browser.
 
-## 6. Configure Tailwind CSS
+## 6. Configure Tailwind to include SDK styles
 
-The SDK ships its own components that use Tailwind classes. You need to tell Tailwind to scan the SDK's source files and enable the typography plugin.
+The SDK ships its own components that use Tailwind classes. You need to tell Tailwind to scan the SDK's source files and enable the typography plugin so that those classes end up in your final CSS.
 
 Update your `tailwind.config.ts` (or `.js`):
 
 ```ts
+// tailwind.config.ts
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
@@ -96,6 +98,14 @@ export default function Blog() {
 
 Wrapping it in `<Suspense>` lets Next.js stream the page shell immediately and show `AtomLoadingSkeleton` while the fetch completes.
 
+### `AtomPage` props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | Your Atom project key (required) |
+| `baseRoute` | `string` | — | URL prefix for post links, e.g. `"/blog"` (required) |
+| `title` | `boolean` | `true` | Whether to render the project title as an `<h1>`. Set to `false` if you render your own heading. |
+
 ## 8. Create the single post page
 
 Create `app/blog/[id]/page.tsx`. The `Atom` component fetches and renders one post, including its full markdown body:
@@ -128,6 +138,15 @@ export default function BlogPage({ params }: BlogParams) {
 
 The `Atom` component fetches the post content, compiles the markdown body to HTML (using MDX with `remark-gfm` for GitHub-flavored markdown), and renders the full article with title, author, date, cover image, and body.
 
+### `Atom` props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | Your Atom project key (required) |
+| `postId` | `string` | — | The post ID from the URL params (required) |
+| `remarkPlugins` | `any[]` | `[]` | Additional [remark plugins](https://github.com/remarkjs/remark/blob/main/doc/plugins.md) to apply during markdown compilation |
+| `rehypePlugins` | `any[]` | `[]` | Additional [rehype plugins](https://github.com/rehypejs/rehype/blob/main/doc/plugins.md) to apply during HTML processing |
+
 ## 9. Verify it works
 
 Start your dev server:
@@ -146,7 +165,22 @@ If you see an error instead, double-check that:
 
 ## Next steps
 
-- **Add more posts** in the Atom dashboard. They appear on your blog automatically, no redeployment needed.
+- **Add more posts** in the Atom dashboard. They appear on your blog automatically — no redeployment needed, since the SDK fetches content at request time.
 - **Wrap components in your own layout** by nesting `AtomPage` and `Atom` inside your app's container components.
-- **Generate a sitemap** using the `generateSitemap` helper from the SDK for better SEO.
+- **Generate a sitemap** using the `generateSitemap` helper from the SDK for better SEO:
+
+  ```tsx
+  // app/sitemap.ts
+
+  import { generateSitemap } from 'atom-nextjs';
+
+  export default async function sitemap() {
+    return await generateSitemap(
+      process.env.ATOM_PROJECT_KEY!,
+      'https://yourdomain.com/blog'
+    );
+  }
+  // Returns: [{ url: string, lastModified: Date, priority: number }, ...]
+  ```
+
 - **Hide the project title** by passing `title={false}` to `AtomPage` if you want to render your own heading.
