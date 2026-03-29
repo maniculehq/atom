@@ -2,6 +2,19 @@
 
 Go from zero to a working blog in your Next.js app, with content managed through the Atom dashboard. By the end of this guide, you'll have a blog listing page and individual post pages powered by the Atom CMS — all in about 15 minutes.
 
+Here's what the core integration looks like — a single server component that fetches and renders your blog:
+
+```tsx
+// app/blog/page.tsx
+import { AtomPage } from 'atom-nextjs';
+
+export default function Blog() {
+  return <AtomPage baseRoute="/blog" projectKey={process.env.ATOM_PROJECT_KEY!} />;
+}
+```
+
+The steps below walk you through setting up your Atom project, installing the SDK, and building out the full pages with loading states and SEO metadata.
+
 ## Prerequisites
 
 - A [Next.js 13+](https://nextjs.org/) project using the App Router
