@@ -33,4 +33,4 @@ Each entry takes two fields:
 - **`title`** (string) — The label shown in the sidebar navigation.
 - **`path`** (string) — The filename inside `docs/` without the `.md` extension. For `docs/my-page.md`, use `"my-page"`.
 
-The order of entries in the array controls the order pages appear in the sidebar. No restart or cache clear is needed after adding a page.
+The order of entries in the array controls the order pages appear in the sidebar.
