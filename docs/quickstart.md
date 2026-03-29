@@ -1,6 +1,6 @@
 # Quickstart
 
-Go from zero to a working blog in your Next.js app, with content managed through the Atom dashboard. By the end of this guide, you'll have a blog listing page and individual post pages powered by the Atom CMS — all in about 15 minutes.
+Go from zero to a working blog in your Next.js app, with content managed through the Atom dashboard. By the end of this guide, you'll have a blog listing page and individual post pages powered by the Atom CMS.
 
 Here's what the core integration looks like — a single server component that fetches and renders your blog:
 
@@ -33,7 +33,7 @@ In the left sidebar, click **Copy project key**. This key is how the SDK authent
 
 ## 3. Write your first post
 
-While still in the project editor, click **Create Post** at the bottom of the sidebar. Fill in the title, author name, teaser (a short summary shown on post cards), and body content using markdown. Optionally add a cover image URL and comma-separated keywords. Save the post.
+While still in the project editor, click **Create new post** at the bottom of the sidebar. Fill in the title, author name, teaser (a short summary shown on post cards), and body content using markdown. Add a cover image URL and comma-separated keywords. Click **Create post** to save.
 
 You now have content ready to fetch. Time to wire it up in your Next.js app.
 
