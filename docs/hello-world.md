@@ -5,6 +5,7 @@ Install the `atom-nextjs` package and render your first blog page in under a min
 ## Prerequisites
 
 - A Next.js 14+ project using the App Router
+- [Tailwind CSS](https://tailwindcss.com/docs/installation) installed with the [`@tailwindcss/typography`](https://tailwindcss.com/docs/typography-plugin) plugin — Atom components use Tailwind utility classes and `prose` for styling
 - An Atom project key (grab one from the [Atom dashboard](https://www.atomcms.dev) after creating a project)
 
 ## 1. Install the SDK
@@ -25,7 +26,7 @@ Your project key authenticates requests from the SDK to the Atom API. It's safe 
 
 ## 3. Render a blog listing page
 
-Create `app/blog/page.tsx` with the `AtomPage` component. It's an async server component that fetches your posts and renders them automatically.
+Create `app/blog/page.tsx` with the `AtomPage` component. It's an async server component that fetches your posts and renders them as a grid of linked cards.
 
 ```tsx
 import { AtomPage, AtomLoadingSkeleton } from "atom-nextjs";
@@ -73,7 +74,7 @@ export default function BlogPost({ params }: { params: { id: string } }) {
 }
 ```
 
-The `Atom` component fetches a single post by its `postId`, then renders the title, author, date, cover image (if set), and the markdown body compiled to HTML.
+The `Atom` component fetches a single post by its `postId`, then renders the title, author, date, cover image (if set), and the markdown body compiled to React components via MDX.
 
 ### Atom props
 
@@ -83,6 +84,8 @@ The `Atom` component fetches a single post by its `postId`, then renders the tit
 | `postId` | `string` | — | The id of the post to render (required). Comes from the dynamic route segment. |
 | `remarkPlugins` | `any[]` | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins for markdown processing. |
 | `rehypePlugins` | `any[]` | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins for HTML post-processing. |
+
+The SDK includes [`remark-gfm`](https://github.com/remarkjs/remark-gfm) (tables, strikethrough, autolinks) and [`rehype-sanitize`](https://github.com/rehypejs/rehype-sanitize) (strips unsafe HTML) by default. Your custom plugins run alongside these.
 
 ## 5. Add SEO metadata (optional)
 
