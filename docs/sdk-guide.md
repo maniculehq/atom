@@ -315,7 +315,7 @@ export default async function CustomPost({ postId }: { postId: string }) {
     <article>
       <h1>{post.title}</h1>
       <p>By {post.author}</p>
-      {/* post.body is raw markdown — you'll need to render it yourself */}
+      {/* post.body is raw markdown, so you'll need to render it yourself */}
       <div>{post.body}</div>
     </article>
   );
