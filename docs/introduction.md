@@ -1,6 +1,6 @@
 # Introduction
 
-Atom is a headless CMS built specifically for Next.js. You write and manage your blog posts in the Atom dashboard, and a small companion package (`atom-nextjs`) renders them inside your own Next.js app, with no lock-in on layout, styling, or routing.
+Atom is a headless CMS built specifically for Next.js. You write and manage your blog posts in the Atom dashboard, and a small companion package (`atom-nextjs`) renders them inside your own Next.js app, with no lock-in on routing or page layout.
 
 ## How the two parts fit together
 
@@ -16,6 +16,21 @@ Install the SDK:
 
 ```bash
 npm install atom-nextjs
+```
+
+The SDK components use [Tailwind CSS](https://tailwindcss.com) utility classes, including `prose` from [`@tailwindcss/typography`](https://tailwindcss.com/docs/typography-plugin). Your Tailwind config needs both the typography plugin and the SDK's component paths in `content` so the classes are included in your build:
+
+```js
+// tailwind.config.js
+module.exports = {
+  content: [
+    // ... your existing paths
+    './node_modules/atom-nextjs/src/components/*.{ts,tsx}',
+  ],
+  plugins: [
+    require('@tailwindcss/typography'),
+  ],
+};
 ```
 
 Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`), then create two route files.
@@ -81,8 +96,8 @@ Beyond the two main components, the `atom-nextjs` package exports several utilit
 |--------|---------|
 | `getPost(projectKey, postId)` | Fetch a single post directly — useful when you need raw post data outside a component |
 | `getProject(projectKey)` | Fetch the full project with all its posts — useful for custom list layouts |
-| `generatePostMetadata(projectKey, postId)` | Generate Next.js `Metadata` for a post (title, description, Open Graph) |
-| `generateSitemap(projectKey, baseRoute)` | Generate sitemap entries for all posts in a project |
+| `generatePostMetadata(projectKey, postId)` | Generate Next.js `Metadata` for a post (title, description, keywords, authors) |
+| `generateSitemap(projectKey, blogRoute)` | Generate sitemap entries for all posts in a project |
 | `AtomBody` | Render just the markdown body of a post, with optional remark/rehype plugins |
 | `AtomPostCard` | Render a single post card — the same card `AtomPage` uses internally |
 
