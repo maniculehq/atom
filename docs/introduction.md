@@ -48,6 +48,6 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
 Your site stays in full control of layout, styling, and routing. Atom handles the content.
 
-## What Atom is — and isn't — responsible for
+## What Atom is (and isn't) responsible for
 
 Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else.
