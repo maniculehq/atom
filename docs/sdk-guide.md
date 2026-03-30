@@ -4,6 +4,28 @@ Atom is a headless CMS built for Next.js. You write and manage blog posts in the
 
 This guide walks you through everything: installing the SDK, creating your first blog listing, rendering individual posts, adding SEO metadata, and handling loading states. By the end, you'll have a fully working blog powered by Atom.
 
+**Quick install:**
+
+```bash
+npm i atom-nextjs@latest @tailwindcss/typography
+```
+
+```tsx
+// app/blog/page.tsx — minimal blog listing
+import { AtomPage } from 'atom-nextjs';
+
+export default function Blog() {
+  return (
+    <AtomPage
+      baseRoute="/blog"
+      projectKey={process.env.ATOM_PROJECT_KEY!}
+    />
+  );
+}
+```
+
+---
+
 ## Prerequisites
 
 Before you start, make sure you have:
@@ -14,7 +36,7 @@ Before you start, make sure you have:
 
 Your project key is a Bearer token that looks like `atom-aBcDeFgHiJkLmN...`. You can find it on your project's page in the Atom dashboard. Keep it secret, because anyone with this key can read your content through the API.
 
-## Step 1: Install the SDK
+## Step 1: Install the SDK packages
 
 The SDK needs two packages: `atom-nextjs` itself and the Tailwind CSS typography plugin (which styles the rendered markdown).
 
@@ -22,7 +44,7 @@ The SDK needs two packages: `atom-nextjs` itself and the Tailwind CSS typography
 npm i atom-nextjs@latest @tailwindcss/typography
 ```
 
-## Step 2: Configure Tailwind CSS
+## Step 2: Configure Tailwind to include SDK styles
 
 The SDK ships its own components with Tailwind classes. For those classes to work, Tailwind needs to scan the SDK's source files. You also need to add the typography plugin so rendered markdown gets proper styling (headings, paragraphs, code blocks, lists).
 
@@ -35,14 +57,14 @@ module.exports = {
     // Your existing content paths
     './app/**/*.{ts,tsx}',
     './components/**/*.{ts,tsx}',
-    // Add the SDK's components
+    // Add the SDK's components so Tailwind generates their classes
     './node_modules/atom-nextjs/src/components/*.{ts,tsx}',
   ],
   theme: {
     extend: {},
   },
   plugins: [
-    // Add the typography plugin
+    // Add the typography plugin for markdown styling
     require('@tailwindcss/typography'),
   ],
 };
@@ -50,7 +72,7 @@ module.exports = {
 
 The `@tailwindcss/typography` plugin provides the `prose` classes that the `Atom` component uses to style your markdown content. Without it, your blog posts will look unstyled.
 
-## Step 3: Store your project key
+## Step 3: Store your project key securely
 
 Add your Atom project key to your environment variables. Create or update your `.env.local` file:
 
@@ -89,13 +111,15 @@ export default function Blog() {
 }
 ```
 
-`AtomPage` accepts three props:
+### `AtomPage` props
 
-- **`projectKey`** (required): Your Atom project key. The SDK sends this as a Bearer token to the Atom API.
-- **`baseRoute`** (required): The URL path prefix for individual posts. Setting this to `"/blog"` means a post with ID `abc123` links to `/blog/abc123`.
-- **`title`** (optional, defaults to `true`): When `true`, the component renders your project title as an `<h1>` above the post grid. Set it to `false` if you want to provide your own heading.
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `projectKey` | `string` | **(required)** | Your Atom project key. The SDK sends this as a Bearer token to the Atom API. |
+| `baseRoute` | `string` | **(required)** | URL path prefix for post links. `"/blog"` means post `abc123` links to `/blog/abc123`. |
+| `title` | `boolean` | `true` | When `true`, renders your project title as an `<h1>` above the post grid. Set to `false` to provide your own heading. |
 
-### Why `cookies()`?
+### Why call `cookies()`?
 
 Next.js aggressively caches server component output. Calling `cookies()` signals to Next.js that this page depends on request-time data, which disables static caching. Without it, your blog listing might show stale content after you publish or update a post.
 
@@ -136,18 +160,36 @@ export default function BlogPage({ params }: BlogParams) {
 
 There are two things happening here:
 
-**The `Atom` component** takes `projectKey` and `postId`, fetches the post from the API, and renders a complete `<article>` with the `prose` Tailwind class for markdown styling. It also supports two optional props for customizing markdown rendering:
+**The `Atom` component** takes `projectKey` and `postId`, fetches the post from the API, and renders a complete `<article>` with the `prose` Tailwind class for markdown styling.
 
-- **`remarkPlugins`**: Additional [remark](https://github.com/remarkjs/remark) plugins (the SDK already includes `remark-gfm` for GitHub Flavored Markdown: tables, strikethrough, task lists).
-- **`rehypePlugins`**: Additional [rehype](https://github.com/rehypejs/rehype) plugins (the SDK already includes `rehype-sanitize` to prevent XSS).
+### `Atom` props
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `projectKey` | `string` | **(required)** | Your Atom project key. |
+| `postId` | `string` | **(required)** | The ID of the post to fetch and render. |
+| `remarkPlugins` | `Plugin[]` | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins. The SDK already includes `remark-gfm` for GitHub Flavored Markdown (tables, strikethrough, task lists). |
+| `rehypePlugins` | `Plugin[]` | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins. The SDK already includes `rehype-sanitize` to prevent XSS. |
+
+### Generate SEO metadata with `generatePostMetadata`
 
 **The `generatePostMetadata` function** fetches the post data and returns a Next.js `Metadata` object with the post's title, description (from the teaser), keywords, and author. Next.js uses this to set `<title>`, `<meta>` description, and other SEO tags automatically.
 
+The returned metadata has this shape:
+
+```ts
+// Return type: Metadata (from 'next')
+{
+  title: string;        // Post title
+  description: string;  // Post teaser
+  keywords: string[];   // Post keywords
+  authors: [{ name: string }]; // Post author
+}
+```
+
 ## Step 6: Add loading skeletons
 
-Since `Atom` and `AtomPage` are async server components that fetch data from the Atom API, there's a short delay before content appears. React's `Suspense` lets you show a loading skeleton during that fetch.
-
-The SDK provides two skeleton components that match the layout of the content they replace.
+Since `Atom` and `AtomPage` are async server components that fetch data from the Atom API, there's a short delay before content appears. React's `Suspense` lets you show a loading skeleton during that fetch. The SDK provides two skeleton components that match the layout of the content they replace.
 
 Update your blog listing page (`app/blog/page.tsx`):
 
@@ -209,7 +251,7 @@ export default function BlogPage({ params }: BlogParams) {
 
 `AtomLoadingSkeleton` renders four placeholder cards that mimic the post grid layout. `AtomArticleSkeleton` renders a placeholder that mimics a full article page. Both use the `react-loading-skeleton` library, which is bundled with the SDK.
 
-## Step 7: Generate a sitemap
+## Step 7: Generate a sitemap for search engines
 
 Sitemaps help search engines discover and index your blog posts. The SDK's `generateSitemap` function fetches your project's posts and returns an array of sitemap entries in the format Next.js expects.
 
@@ -238,11 +280,22 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
 Replace `https://yourdomain.com` with your actual domain. The function generates one entry for each post (at priority 0.5) and one for the blog index (at priority 0.6), using each post's `updatedAt` timestamp as the `lastModified` date.
 
-## Fetching data directly
+Each entry in the returned array has this shape:
 
-If you need more control over how content is displayed (for example, building a custom post card or filtering posts), you can use the lower-level `getProject` and `getPost` functions instead of the pre-built components.
+```ts
+// Each item in the routes array
+{
+  url: string;          // e.g. "https://yourdomain.com/blog/abc123"
+  lastModified: Date;   // Post's updatedAt timestamp
+  priority: number;     // 0.5 for posts, 0.6 for the blog index
+}
+```
 
-**Fetching all posts in a project:**
+## Fetch data directly for custom layouts
+
+If you need more control over how content is displayed — for example, building a custom post card or filtering posts — you can use the lower-level `getProject` and `getPost` functions instead of the pre-built components.
+
+### Fetch all posts with `getProject`
 
 ```tsx
 import { getProject } from 'atom-nextjs';
@@ -297,7 +350,7 @@ export default async function CustomBlog() {
 
 Note that `ClientPost` objects don't include the full markdown `body`. This keeps the listing response lightweight. The body is only returned when you fetch a single post.
 
-**Fetching a single post:**
+### Fetch a single post with `getPost`
 
 ```tsx
 import { getPost } from 'atom-nextjs';
@@ -315,16 +368,37 @@ export default async function CustomPost({ postId }: { postId: string }) {
     <article>
       <h1>{post.title}</h1>
       <p>By {post.author}</p>
-      {/* post.body is raw markdown, so you'll need to render it yourself */}
+      {/* post.body is raw markdown — you'll need to render it yourself */}
       <div>{post.body}</div>
     </article>
   );
 }
 ```
 
-`getPost` returns an `ApiResponse<Post>` where `Post` includes the full `body` (markdown string), `keywords` array, and `creator_uid`, in addition to all the fields from `ClientPost`.
+`getPost` returns an `ApiResponse<Post>` with this shape:
 
-If you go this route, you can use the `AtomBody` component to render the markdown:
+```ts
+{
+  success: boolean;
+  message: string;
+  response: {
+    id: string;
+    title: string;
+    teaser: string;
+    author: string;
+    image: string | null;
+    body: string;           // Full markdown content
+    keywords: string[];     // SEO keywords
+    creator_uid: string;    // UID of the post creator
+    createdAt: Date;
+    updatedAt: Date;
+  };
+}
+```
+
+### Render markdown with `AtomBody`
+
+If you fetch posts with `getPost` but still want the SDK's markdown rendering, use the `AtomBody` component:
 
 ```tsx
 import { getPost, AtomBody } from 'atom-nextjs';
@@ -345,17 +419,23 @@ export default async function CustomPost({ postId }: { postId: string }) {
 }
 ```
 
-`AtomBody` is an async server component that compiles markdown to React elements using `next-mdx-remote`. It includes `remark-gfm` (GitHub Flavored Markdown) and `rehype-sanitize` (XSS protection) by default. You can pass additional plugins via the `remarkPlugins` and `rehypePlugins` props.
+`AtomBody` is an async server component that compiles markdown to React elements using `next-mdx-remote`. It includes `remark-gfm` (GitHub Flavored Markdown) and `rehype-sanitize` (XSS protection) by default.
 
-## Dark mode
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `body` | `string` | **(required)** | The raw markdown string to render. |
+| `remarkPlugins` | `Plugin[]` | `[]` | Additional remark plugins (on top of `remark-gfm`). |
+| `rehypePlugins` | `Plugin[]` | `[]` | Additional rehype plugins (on top of `rehype-sanitize`). |
 
-The SDK's built-in components currently do not support dark mode. The post cards use hardcoded light-mode colors (like `hover:bg-slate-50` and `text-slate-500`). If your site uses dark mode, you'll want to fetch data with `getProject`/`getPost` and build your own components as described in the section above.
+## Handle dark mode
 
-## Rate limiting
+The SDK's built-in components currently do not support dark mode. The post cards use hardcoded light-mode colors (like `hover:bg-slate-50` and `text-slate-500`). If your site uses dark mode, you'll want to fetch data with `getProject`/`getPost` and build your own components as described in [Fetch data directly for custom layouts](#fetch-data-directly-for-custom-layouts).
 
-The Atom API limits requests to 30 per minute per IP address. In normal usage this is unlikely to be an issue, since the SDK only makes one fetch per page render. But if you're generating many pages at build time (for example, with `generateStaticParams`), you might hit this limit. If that happens, add a small delay between builds or contact the Atom team.
+## Understand rate limits
 
-## Quick reference
+The Atom API limits requests to **30 per minute per IP address**. In normal usage this is unlikely to be an issue, since the SDK only makes one fetch per page render. But if you're generating many pages at build time (for example, with `generateStaticParams`), you might hit this limit. If that happens, add a small delay between builds or contact the Atom team.
+
+## SDK exports at a glance
 
 Here's a summary of everything the SDK exports:
 
