@@ -23,7 +23,7 @@ Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.
 First, the blog listing page:
 
 ```tsx
-// app/blog/page.tsx — renders a linked card list of all posts in your project
+// app/blog/page.tsx - renders a linked card list of all posts in your project
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -41,7 +41,7 @@ export default function Blog() {
 Next, the individual post page:
 
 ```tsx
-// app/blog/[id]/page.tsx — fetches and renders a single post by its ID
+// app/blog/[id]/page.tsx - fetches and renders a single post by its ID
 import { Atom, AtomArticleSkeleton, generatePostMetadata } from 'atom-nextjs';
 import { Suspense } from 'react';
 
