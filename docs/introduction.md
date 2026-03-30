@@ -10,14 +10,20 @@ The system has two parts that communicate through an API key.
 
 **The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components (`AtomPage` to list posts and `Atom` to display a single post), pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
 
+## Add a blog to your Next.js app
+
+Install the SDK:
+
 ```bash
 npm install atom-nextjs
 ```
 
-From there, a blog route is two files. Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`) and reference it in each component:
+Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`), then create two route files.
+
+**List all posts** — `AtomPage` fetches every post in your project and renders a linked card for each one:
 
 ```tsx
-// app/blog/page.tsx - renders a linked card list of all posts in your project
+// app/blog/page.tsx
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -30,8 +36,18 @@ export default function Blog() {
 }
 ```
 
+`AtomPage` accepts these props:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | *required* | Your project's API key |
+| `baseRoute` | `string` | *required* | URL prefix for post links (e.g. `"/blog"` generates `"/blog/post-id"`) |
+| `title` | `boolean` | `true` | Whether to render the project title as an `<h1>` above the post list |
+
+**Display a single post** — `Atom` fetches one post by ID and renders the full article (title, cover image, author, date, and markdown body):
+
 ```tsx
-// app/blog/[id]/page.tsx - fetches and renders a single post by its ID
+// app/blog/[id]/page.tsx
 import { Atom, AtomArticleSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -44,9 +60,31 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 }
 ```
 
+`Atom` accepts these props:
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | *required* | Your project's API key |
+| `postId` | `string` | *required* | The ID of the post to render |
+| `remarkPlugins` | `any[]` | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins for markdown processing |
+| `rehypePlugins` | `any[]` | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins for HTML processing |
+
+### Why Suspense is used in both examples
+
 `AtomPage` and `Atom` are async server components that fetch from the Atom API. Wrapping them in `<Suspense>` lets Next.js stream the page immediately and show a skeleton while the fetch is in progress. Without it, rendering blocks until the fetch completes and there is no loading state.
 
-Your site stays in full control of layout, styling, and routing. Atom handles the content.
+## Other exports you can use
+
+Beyond the two main components, the `atom-nextjs` package exports several utilities for more advanced use cases:
+
+| Export | Purpose |
+|--------|---------|
+| `getPost(projectKey, postId)` | Fetch a single post directly — useful when you need raw post data outside a component |
+| `getProject(projectKey)` | Fetch the full project with all its posts — useful for custom list layouts |
+| `generatePostMetadata(projectKey, postId)` | Generate Next.js `Metadata` for a post (title, description, Open Graph) |
+| `generateSitemap(projectKey, baseRoute)` | Generate sitemap entries for all posts in a project |
+| `AtomBody` | Render just the markdown body of a post, with optional remark/rehype plugins |
+| `AtomPostCard` | Render a single post card — the same card `AtomPage` uses internally |
 
 ## What Atom is (and isn't) responsible for
 
