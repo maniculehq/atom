@@ -10,14 +10,18 @@ The system has two parts that communicate through an API key.
 
 **The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components (`AtomPage` to list posts and `Atom` to display a single post), pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
 
+## Get a blog running in two files
+
+Install the SDK and store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`):
+
 ```bash
 npm install atom-nextjs
 ```
 
-From there, a blog route is two files. Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`) and reference it in each component:
+Then create two route files — one to list every post, one to display a single post:
 
 ```tsx
-// app/blog/page.tsx - renders a linked card list of all posts in your project
+// app/blog/page.tsx — linked card list of all posts in your project
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -31,7 +35,7 @@ export default function Blog() {
 ```
 
 ```tsx
-// app/blog/[id]/page.tsx - fetches and renders a single post by its ID
+// app/blog/[id]/page.tsx — fetches and renders a single post by its ID
 import { Atom, AtomArticleSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -44,10 +48,38 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 }
 ```
 
-`AtomPage` and `Atom` are async server components that fetch from the Atom API. Wrapping them in `<Suspense>` lets Next.js stream the page immediately and show a skeleton while the fetch is in progress. Without it, rendering blocks until the fetch completes and there is no loading state.
+`AtomPage` and `Atom` are async server components that fetch from the Atom API. Wrapping them in `<Suspense>` lets Next.js stream the page immediately and show a skeleton while the fetch is in progress. Without `<Suspense>`, rendering blocks until the fetch completes and there is no loading state.
 
-Your site stays in full control of layout, styling, and routing. Atom handles the content.
+### Component props
 
-## What Atom is (and isn't) responsible for
+**`AtomPage`** — lists every post in a project.
 
-Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else.
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | *required* | The project key from your Atom dashboard. |
+| `baseRoute` | `string` | *required* | URL prefix for post links (e.g. `"/blog"`). Each card links to `{baseRoute}/{post.id}`. |
+| `title` | `boolean` | `true` | Whether to render the project title as an `<h1>` above the post list. |
+
+**`Atom`** — renders a single post.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | *required* | The project key from your Atom dashboard. |
+| `postId` | `string` | *required* | The post ID, typically from a dynamic route param. |
+| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins passed to the markdown processor. |
+| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins passed to the markdown processor. |
+
+### Utility exports
+
+Beyond the two main components, `atom-nextjs` exports helpers you can use directly:
+
+| Export | Purpose |
+|--------|---------|
+| `generatePostMetadata(projectKey, postId)` | Returns a Next.js `Metadata` object for a post — useful in `generateMetadata` for SEO. |
+| `generateSitemap(projectKey)` | Returns sitemap entries for all posts in a project. |
+| `getPost(projectKey, postId)` | Fetches a single post. Returns `{ response, success, message }`. |
+| `getProject(projectKey)` | Fetches a project and all its posts. Returns `{ response, success, message }`. |
+
+## What Atom handles — and what your app owns
+
+Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else — layout, styling, routing, and deployment.
