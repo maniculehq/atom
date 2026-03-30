@@ -12,6 +12,12 @@ The system has two parts that communicate through an API key.
 
 ## Get a blog running in two files
 
+### Prerequisites
+
+The SDK's built-in components use [Tailwind CSS](https://tailwindcss.com/) utility classes for layout and styling, plus the [`@tailwindcss/typography`](https://tailwindcss.com/docs/typography-plugin) plugin for article prose formatting. Make sure both are configured in your Next.js project before continuing.
+
+### Installation
+
 Install the SDK and store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`):
 
 ```bash
@@ -66,19 +72,37 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 |------|------|---------|-------------|
 | `projectKey` | `string` | *required* | The project key from your Atom dashboard. |
 | `postId` | `string` | *required* | The post ID, typically from a dynamic route param. |
-| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins passed to the markdown processor. |
-| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins passed to the markdown processor. |
+| `remarkPlugins` | `any[]` | none | Additional remark plugins appended after the built-in `remarkGfm`. |
+| `rehypePlugins` | `any[]` | none | Additional rehype plugins appended after the built-in `rehypeSanitize`. |
+
+The markdown processor always includes [`remark-gfm`](https://github.com/remarkjs/remark-gfm) (GitHub Flavored Markdown) and [`rehype-sanitize`](https://github.com/rehypejs/rehype-sanitize) (HTML sanitization). Any plugins you pass are added after these defaults.
+
+**`AtomPostCard`** — renders a single post card (used internally by `AtomPage`, but exported for custom layouts).
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `post` | `ClientPost` | *required* | A post object from the project's `posts` array. |
+| `baseRoute` | `string` | *required* | URL prefix for the post link. |
+
+**`AtomBody`** — renders a markdown string to HTML (used internally by `Atom`, but exported for custom layouts).
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `body` | `string` | *required* | Raw markdown/MDX string to render. |
+| `className` | `string` | none | CSS class applied to the wrapper `<div>`. |
+| `remarkPlugins` | `any[]` | none | Additional remark plugins appended after `remarkGfm`. |
+| `rehypePlugins` | `any[]` | none | Additional rehype plugins appended after `rehypeSanitize`. |
 
 ### Utility exports
 
-Beyond the two main components, `atom-nextjs` exports helpers you can use directly.
+Beyond the components, `atom-nextjs` exports helpers you can use directly.
 
 **Metadata and SEO**
 
 | Export | Purpose |
 |--------|---------|
 | `generatePostMetadata(projectKey, postId)` | Returns a Next.js `Metadata` object for a post — useful in `generateMetadata` for SEO. |
-| `generateSitemap(projectKey)` | Returns sitemap entries for all posts in a project. |
+| `generateSitemap(projectKey, blogRoute)` | Returns sitemap entries for all posts in a project. `blogRoute` is the base URL (e.g. `"https://example.com/blog"`). |
 
 **Data fetching**
 
