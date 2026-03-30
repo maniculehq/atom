@@ -71,12 +71,19 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
 ### Utility exports
 
-Beyond the two main components, `atom-nextjs` exports helpers you can use directly:
+Beyond the two main components, `atom-nextjs` exports helpers you can use directly.
+
+**Metadata and SEO**
 
 | Export | Purpose |
 |--------|---------|
 | `generatePostMetadata(projectKey, postId)` | Returns a Next.js `Metadata` object for a post — useful in `generateMetadata` for SEO. |
 | `generateSitemap(projectKey)` | Returns sitemap entries for all posts in a project. |
+
+**Data fetching**
+
+| Export | Purpose |
+|--------|---------|
 | `getPost(projectKey, postId)` | Fetches a single post. Returns `{ response, success, message }`. |
 | `getProject(projectKey)` | Fetches a project and all its posts. Returns `{ response, success, message }`. |
 
