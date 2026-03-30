@@ -24,10 +24,10 @@ Install the SDK and store your project key in an environment variable (e.g. `ATO
 npm install atom-nextjs
 ```
 
-Then create two route files — one to list every post, one to display a single post:
+Then create two route files. One to list every post, one to display a single post:
 
 ```tsx
-// app/blog/page.tsx — linked card list of all posts in your project
+// app/blog/page.tsx - linked card list of all posts in your project
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -41,7 +41,7 @@ export default function Blog() {
 ```
 
 ```tsx
-// app/blog/[id]/page.tsx — fetches and renders a single post by its ID
+// app/blog/[id]/page.tsx - fetches and renders a single post by its ID
 import { Atom, AtomArticleSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
@@ -58,7 +58,7 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
 ### Component props
 
-**`AtomPage`** — lists every post in a project.
+**`AtomPage`** lists every post in a project.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -66,7 +66,7 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 | `baseRoute` | `string` | *required* | URL prefix for post links (e.g. `"/blog"`). Each card links to `{baseRoute}/{post.id}`. |
 | `title` | `boolean` | `true` | Whether to render the project title as an `<h1>` above the post list. |
 
-**`Atom`** — renders a single post.
+**`Atom`** renders a single post.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -77,14 +77,14 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
 The markdown processor always includes [`remark-gfm`](https://github.com/remarkjs/remark-gfm) (GitHub Flavored Markdown) and [`rehype-sanitize`](https://github.com/rehypejs/rehype-sanitize) (HTML sanitization). Any plugins you pass are added after these defaults.
 
-**`AtomPostCard`** — renders a single post card (used internally by `AtomPage`, but exported for custom layouts).
+**`AtomPostCard`** renders a single post card (used internally by `AtomPage`, but exported for custom layouts).
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
 | `post` | `ClientPost` | *required* | A post object from the project's `posts` array. |
 | `baseRoute` | `string` | *required* | URL prefix for the post link. |
 
-**`AtomBody`** — renders a markdown string to HTML (used internally by `Atom`, but exported for custom layouts).
+**`AtomBody`** renders a markdown string to HTML (used internally by `Atom`, but exported for custom layouts).
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
@@ -101,7 +101,7 @@ Beyond the components, `atom-nextjs` exports helpers you can use directly.
 
 | Export | Purpose |
 |--------|---------|
-| `generatePostMetadata(projectKey, postId)` | Returns a Next.js `Metadata` object for a post — useful in `generateMetadata` for SEO. |
+| `generatePostMetadata(projectKey, postId)` | Returns a Next.js `Metadata` object for a post, useful in `generateMetadata` for SEO. |
 | `generateSitemap(projectKey, blogRoute)` | Returns sitemap entries for all posts in a project. `blogRoute` is the base URL (e.g. `"https://example.com/blog"`). |
 
 **Data fetching**
@@ -111,6 +111,6 @@ Beyond the components, `atom-nextjs` exports helpers you can use directly.
 | `getPost(projectKey, postId)` | Fetches a single post. Returns `{ response, success, message }`. |
 | `getProject(projectKey)` | Fetches a project and all its posts. Returns `{ response, success, message }`. |
 
-## What Atom handles — and what your app owns
+## What Atom handles, and what your app owns
 
-Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else — layout, styling, routing, and deployment.
+Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else: layout, styling, routing, and deployment.
