@@ -96,10 +96,10 @@ Every post returned by the Atom API conforms to this shape. You'll encounter it 
 | `title` | `string` | The post's display title. |
 | `author` | `string` | Author name set in the dashboard. |
 | `teaser` | `string` | Short summary shown on post cards. |
-| `image` | `string \| null` | Optional cover image URL. `null` when no image is set. |
 
 | Field | Type | Description |
 |-------|------|-------------|
+| `image` | `string \| null` | Optional cover image URL. `null` when no image is set. |
 | `createdAt` | `Date` | Timestamp when the post was first created. |
 | `updatedAt` | `Date` | Timestamp of the most recent edit. |
 
