@@ -96,10 +96,7 @@ Every post returned by the Atom API conforms to this shape. You'll encounter it 
 | `title` | `string` | The post's display title. |
 | `author` | `string` | Author name set in the dashboard. |
 | `teaser` | `string` | Short summary shown on post cards. |
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `image` | `string \| null` | Optional cover image URL. `null` when no image is set. |
+| `image` | `string \| null \| undefined` | Cover image URL. `null` or `undefined` when no image is set. |
 | `createdAt` | `Date` | Timestamp when the post was first created. |
 | `updatedAt` | `Date` | Timestamp of the most recent edit. |
 
@@ -120,7 +117,7 @@ Beyond the components, `atom-nextjs` exports helpers you can use directly for SE
 
 ### `generatePostMetadata` – add SEO metadata to a post page
 
-Returns a Next.js `Metadata` object for a single post. Call it from your route's `generateMetadata` function so each post page gets its own title, description, and Open Graph tags.
+Returns a Next.js `Metadata` object for a single post. Call it from your route's `generateMetadata` function so each post page gets its own `title`, `description`, `keywords`, and `authors` fields.
 
 **Signature:** `(projectKey: string, postId: string) → Promise<Metadata>`
 
@@ -159,9 +156,9 @@ export default async function sitemap() {
 }
 // Returns:
 // [
-//   { url: "https://example.com/blog", lastModified: Date, priority: 1 },
-//   { url: "https://example.com/blog/post-id-1", lastModified: Date, priority: 0.8 },
+//   { url: "https://example.com/blog/post-id-1", lastModified: Date, priority: 0.5 },
 //   ...
+//   { url: "https://example.com/blog", lastModified: Date, priority: 0.6 },
 // ]
 ```
 
@@ -169,17 +166,17 @@ export default async function sitemap() {
 
 Fetches a single post by ID. Use this when you need the raw post data — for example, to build a fully custom detail page instead of using the `Atom` component.
 
-**Signature:** `(projectKey: string, postId: string) → Promise<{ response: Post | null, success: boolean, message: string }>`
+**Signature:** `(projectKey: string, postId: string) → Promise<ApiResponse<Post>>`
 
-When `success` is `true`, `response` contains the post object. When `success` is `false`, `response` is `null` and `message` describes the error.
+The return type is `ApiResponse<Post>`: `{ response: Post, success: boolean, message: string }`. When `success` is `true`, `response` contains the post object. When `success` is `false`, `response` is `null` and `message` describes the error.
 
 ### `getProject` – fetch a project and all its posts
 
 Fetches a project and all its posts. Use this when you want to build a completely custom list page instead of relying on `AtomPage`.
 
-**Signature:** `(projectKey: string) → Promise<{ response: Project | null, success: boolean, message: string }>`
+**Signature:** `(projectKey: string) → Promise<ApiResponse<ClientProject>>`
 
-When `success` is `true`, `response` contains the project with a `posts` array of [`ClientPost`](#clientpost-shape) objects. When `success` is `false`, `response` is `null` and `message` describes the error.
+The return type is `ApiResponse<ClientProject>`: `{ response: ClientProject, success: boolean, message: string }`. When `success` is `true`, `response` contains the project with a `posts` array of [`ClientPost`](#clientpost-shape) objects. When `success` is `false`, `response` is `null` and `message` describes the error.
 
 ## What Atom handles, and what your app owns
 
