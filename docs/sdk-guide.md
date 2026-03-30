@@ -182,8 +182,8 @@ The returned metadata has this shape:
 {
   title: string;        // Post title
   description: string;  // Post teaser
-  keywords: string[];   // Post keywords
-  authors: [{ name: string }]; // Post author
+  keywords?: string[];  // Post keywords
+  authors: { name: string };  // Post author
 }
 ```
 
@@ -340,7 +340,7 @@ export default async function CustomBlog() {
       title: string;
       teaser: string;
       author: string;
-      image: string | null;
+      image?: string | null;
       createdAt: Date;
       updatedAt: Date;
     }>;
@@ -388,7 +388,7 @@ export default async function CustomPost({ postId }: { postId: string }) {
     author: string;
     image: string | null;
     body: string;           // Full markdown content
-    keywords: string[];     // SEO keywords
+    keywords?: string[];    // SEO keywords
     creator_uid: string;    // UID of the post creator
     createdAt: Date;
     updatedAt: Date;
@@ -424,6 +424,7 @@ export default async function CustomPost({ postId }: { postId: string }) {
 | Prop | Type | Default | Description |
 |---|---|---|---|
 | `body` | `string` | **(required)** | The raw markdown string to render. |
+| `className` | `string` | `undefined` | CSS class name applied to the wrapper `<div>` around the rendered markdown. |
 | `remarkPlugins` | `Plugin[]` | `[]` | Additional remark plugins (on top of `remark-gfm`). |
 | `rehypePlugins` | `Plugin[]` | `[]` | Additional rehype plugins (on top of `rehype-sanitize`). |
 
