@@ -168,8 +168,8 @@ There are two things happening here:
 |---|---|---|---|
 | `projectKey` | `string` | **(required)** | Your Atom project key. |
 | `postId` | `string` | **(required)** | The ID of the post to fetch and render. |
-| `remarkPlugins` | `Plugin[]` | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins. The SDK already includes `remark-gfm` for GitHub Flavored Markdown (tables, strikethrough, task lists). |
-| `rehypePlugins` | `Plugin[]` | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins. The SDK already includes `rehype-sanitize` to prevent XSS. |
+| `remarkPlugins` | `Plugin[]` | `[]` | Additional [remark](https://github.com/remarkjs/remark) plugins, on top of the included `remark-gfm` for GitHub Flavored Markdown (tables, strikethrough, task lists). |
+| `rehypePlugins` | `Plugin[]` | `[]` | Additional [rehype](https://github.com/rehypejs/rehype) plugins, on top of the included `rehype-sanitize` for XSS prevention. |
 
 ### Generate SEO metadata with `generatePostMetadata`
 
