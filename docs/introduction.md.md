@@ -1,69 +1,35 @@
 # Introduction
 
-Atom is a headless CMS built for Next.js. You write and manage blog posts in the Atom dashboard, then render them in your own Next.js app with a small companion package called `atom-nextjs`. Your app keeps full control over layout, styling, routing, and deployment. Atom handles the content.
+Atom is a headless CMS built specifically for Next.js. You write and manage your blog posts in the Atom dashboard, and a small companion package (`atom-nextjs`) renders them inside your own Next.js app, with no lock-in on layout, styling, or routing.
 
-## How the two parts fit together
+## How the dashboard and SDK work together
 
-The system has two pieces that communicate through a project key.
+The system has two parts that communicate through an API key.
 
-**The Atom dashboard** is where you create a _project_ (a named collection of posts). Each project gets a unique `project_key`, a Bearer token that authenticates requests from your app to the Atom API. Inside a project, you write posts in a markdown editor with support for titles, authors, cover images, keywords, and teaser text.
+**The Atom dashboard** is where you create a *project* (a named collection of posts). You write content in a markdown editor, publish it, and the dashboard issues a unique `project_key` for that project. This key acts as a Bearer token, an `Authorization` header value that authenticates your app's requests to the Atom API.
 
-**The `atom-nextjs` SDK** is what you install in your Next.js site. It provides server components that fetch content from the Atom API at request time and render it using `next-mdx-remote`. The two main components are `AtomPage` (lists all posts in a project) and `Atom` (renders a single post). Because these are async server components, your project key never reaches the browser.
-
-Here's how the data flows:
-
-1. You sign into the dashboard, create a project, and write posts in markdown.
-2. The dashboard stores your content in MongoDB and gives you a `project_key`.
-3. In your Next.js app, you pass that key to the SDK's server components.
-4. At render time, the SDK calls the Atom API with the key as a `Bearer` token, fetches the content, and compiles the markdown to HTML.
+**The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components (`AtomPage` to list posts and `Atom` to display a single post), pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
 
 ## Get a blog running in two files
 
-### Prerequisites
+> **Prerequisites:** The SDK's built-in components use [Tailwind CSS](https://tailwindcss.com/) utility classes and the [`@tailwindcss/typography`](https://tailwindcss.com/docs/typography-plugin) plugin for article prose. Make sure both are configured in your Next.js project before continuing.
 
-- A Next.js 13+ project using the App Router
-- [Tailwind CSS](https://tailwindcss.com/) configured in your project
-- The [`@tailwindcss/typography`](https://tailwindcss.com/docs/typography-plugin) plugin installed (the SDK uses `prose` classes for article formatting)
-- An Atom account with at least one project created (sign up at the dashboard to get your `project_key`)
-
-### Installation
+### Install the SDK
 
 ```bash
-npm i atom-nextjs@latest @tailwindcss/typography
+npm install atom-nextjs
 ```
 
-Store your project key in `.env.local`:
+Store your project key in an environment variable (e.g. `ATOM_PROJECT_KEY` in `.env.local`).
 
-```
-ATOM_PROJECT_KEY=atom-your-key-here
-```
+### Create two route files
 
-Then update your Tailwind config to include the SDK's component styles and the typography plugin:
-
-```ts
-// tailwind.config.ts
-module.exports = {
-  content: [
-    // ... your existing paths
-    './node_modules/atom-nextjs/src/components/*.{ts,tsx}',
-  ],
-  plugins: [
-    // ... your existing plugins
-    require('@tailwindcss/typography'),
-  ],
-};
-```
-
-### Create the blog list page
-
-This page fetches all posts in your project and renders them as linked cards.
+One file lists every post, the other displays a single post:
 
 ```tsx
-// app/blog/page.tsx
+// app/blog/page.tsx – linked card list of all posts in your project
 import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
-
-export const metadata = { title: 'Blog' };
 
 export default function Blog() {
   return (
@@ -74,24 +40,14 @@ export default function Blog() {
 }
 ```
 
-`AtomPage` is an async server component. It calls the Atom API with your project key, gets the list of posts, and renders an `AtomPostCard` for each one. The `baseRoute` prop tells the cards where to link: each card points to `{baseRoute}/{post.id}`. Wrapping it in `<Suspense>` lets Next.js stream the page shell immediately while the fetch completes in the background.
-
-### Create the single post page
-
-This page fetches one post by its ID and renders the full article with compiled markdown.
+`AtomPage` is an async server component. It calls the Atom API with your project key, fetches every post in the project, and renders each one as a linked card. The `baseRoute` prop tells it where your blog lives, so each card links to `{baseRoute}/{post.id}`.
 
 ```tsx
-// app/blog/[id]/page.tsx
-import { Atom, AtomArticleSkeleton, generatePostMetadata } from 'atom-nextjs';
+// app/blog/[id]/page.tsx – fetches and renders a single post by its ID
+import { Atom, AtomArticleSkeleton } from 'atom-nextjs';
 import { Suspense } from 'react';
 
-type BlogParams = { params: { id: string } };
-
-export const generateMetadata = async ({ params }: BlogParams) => {
-  return generatePostMetadata(process.env.ATOM_PROJECT_KEY!, params.id);
-};
-
-export default async function BlogPage({ params }: BlogParams) {
+export default function BlogPage({ params }: { params: { id: string } }) {
   return (
     <Suspense fallback={<AtomArticleSkeleton />}>
       <Atom projectKey={process.env.ATOM_PROJECT_KEY!} postId={params.id} />
@@ -100,96 +56,99 @@ export default async function BlogPage({ params }: BlogParams) {
 }
 ```
 
-`Atom` fetches the post, then passes the markdown body through `next-mdx-remote` with `remark-gfm` (GitHub Flavored Markdown) and `rehype-sanitize` (HTML sanitization) applied by default. The `generatePostMetadata` helper populates the page's `<title>`, description, keywords, and author from the post data, so you get proper SEO without writing metadata logic yourself.
-
-### Verify it works
-
-Start your dev server (`npm run dev`), navigate to `/blog`, and you should see cards for each post in your Atom project. Clicking a card takes you to the full article at `/blog/{post-id}`.
+`Atom` works the same way: it fetches a single post by ID and renders the markdown body using `next-mdx-remote`. Wrapping both components in `<Suspense>` lets Next.js stream the page immediately and show a skeleton while the fetch is in progress. Without `<Suspense>`, rendering blocks until the fetch completes and there is no loading state.
 
 ## Component reference
 
-### AtomPage
-
-Lists every post in a project as a grid of linked cards.
+### `AtomPage` – list every post in a project
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `projectKey` | `string` | required | Your project's Bearer token from the Atom dashboard. |
-| `baseRoute` | `string` | required | URL prefix for post links. Each card links to `{baseRoute}/{post.id}`. |
-| `title` | `boolean` | `true` | When `true`, renders the project title as an `<h1>` above the cards. |
+| `projectKey` | `string` | *required* | The project key from your Atom dashboard. |
+| `baseRoute` | `string` | *required* | URL prefix for post links (e.g. `"/blog"`). Each card links to `{baseRoute}/{post.id}`. |
+| `title` | `boolean` | `true` | Whether to render the project title as an `<h1>` above the post list. |
 
-### Atom
-
-Renders a single post as a full article with compiled markdown.
+### `Atom` – render a single post
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `projectKey` | `string` | required | Your project's Bearer token. |
-| `postId` | `string` | required | The post ID, typically from a dynamic route param. |
-| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins, appended after the built-in `remarkGfm`. |
-| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins, appended after the built-in `rehypeSanitize`. |
+| `projectKey` | `string` | *required* | The project key from your Atom dashboard. |
+| `postId` | `string` | *required* | The post ID, typically from a dynamic route param. |
+| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins appended after the built-in `remarkGfm`. |
+| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins appended after the built-in `rehypeSanitize`. |
 
-### AtomBody
+The markdown processor always includes [`remark-gfm`](https://github.com/remarkjs/remark-gfm) (GitHub Flavored Markdown) and [`rehype-sanitize`](https://github.com/rehypejs/rehype-sanitize) (HTML sanitization). Any plugins you pass are added after these defaults.
 
-Renders a raw markdown string to HTML. This is what `Atom` uses internally, but you can import it directly if you need to build a custom post layout.
+### `AtomPostCard` – render a single post card
+
+Used internally by `AtomPage`, but exported so you can build custom list layouts.
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `body` | `string` | required | The markdown string to render. |
+| `post` | `ClientPost` | *required* | A post object from the project's `posts` array. See `getProject` below for the shape. |
+| `baseRoute` | `string` | *required* | URL prefix for the post link. |
+
+### `AtomBody` – render markdown to HTML
+
+Used internally by `Atom`, but exported so you can render arbitrary markdown.
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `body` | `string` | *required* | Raw markdown/MDX string to render. |
 | `className` | `string` | `undefined` | CSS class applied to the wrapper `<div>`. |
-| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins, appended after `remarkGfm`. |
-| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins, appended after `rehypeSanitize`. |
+| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins appended after `remarkGfm`. |
+| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins appended after `rehypeSanitize`. |
 
-### AtomPostCard
+## Utility exports
 
-Renders a single post as a linked card. Used internally by `AtomPage`, but exported for custom layouts where you want to fetch the project yourself and render cards manually.
+Beyond the components, `atom-nextjs` exports helpers you can use directly.
 
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `post` | `ClientPost` | required | A post object from the project's `posts` array. |
-| `baseRoute` | `string` | required | URL prefix for the post link. |
+### Metadata and SEO
 
-## Utility functions
+`generatePostMetadata` takes a project key and a post ID, then returns a Next.js `Metadata` object with the post's title, description (from the teaser), keywords, and author. Use it inside your route's `generateMetadata` function:
 
-### generatePostMetadata(projectKey, postId)
+```tsx
+// app/blog/[id]/page.tsx
+import { generatePostMetadata } from 'atom-nextjs';
 
-Fetches a post and returns a Next.js `Metadata` object containing the post's title, description (from the teaser), keywords, and author. Use this in your page's `generateMetadata` export for automatic SEO.
+export const generateMetadata = async ({ params }: { params: { id: string } }) => {
+  return generatePostMetadata(process.env.ATOM_PROJECT_KEY!, params.id);
+};
+```
 
-### generateSitemap(projectKey, blogRoute)
+`generateSitemap` takes a project key and the full base URL of your blog (e.g. `"https://example.com/blog"`), then returns an array of sitemap entries for every post in the project. Each entry includes the post URL, its `lastModified` date, and a priority value. Use it in your `sitemap.ts` file:
 
-Fetches all posts in a project and returns an array of sitemap entries. Each entry includes the post URL (constructed from `blogRoute`), `lastModified` timestamp, and priority. Pass the result directly to your `sitemap.ts` route.
-
-```ts
+```tsx
 // app/sitemap.ts
 import { generateSitemap } from 'atom-nextjs';
 
 export default async function sitemap() {
-  const blogEntries = await generateSitemap(
-    process.env.ATOM_PROJECT_KEY!,
-    'https://yoursite.com/blog'
-  );
-
-  return [
-    { url: 'https://yoursite.com', lastModified: new Date() },
-    ...blogEntries,
-  ];
+  return generateSitemap(process.env.ATOM_PROJECT_KEY!, 'https://example.com/blog');
 }
 ```
 
-### getProject(projectKey)
+### Data fetching
 
-Fetches a project and all its posts. Returns `{ response: ClientProject, success: boolean, message: string }`. The `ClientProject` type includes the project title and an array of `ClientPost` objects (without the full markdown body, just metadata like title, author, teaser, image, and timestamps).
+If the built-in components don't fit your layout, you can fetch data directly and render it yourself.
 
-### getPost(projectKey, postId)
+`getPost(projectKey, postId)` returns a promise that resolves to `{ response, success, message }`. When `success` is `true`, `response` contains the full post object with fields like `title`, `author`, `body` (raw markdown), `image`, `keywords`, `teaser`, `createdAt`, and `updatedAt`.
 
-Fetches a single post with its full markdown body. Returns `{ response: Post, success: boolean, message: string }`.
+`getProject(projectKey)` returns the same shape. When `success` is `true`, `response` contains the project with a `posts` array of `ClientPost` objects (a subset of post fields: `id`, `title`, `author`, `teaser`, `image`, `createdAt`, `updatedAt`).
+
+```tsx
+import { getProject } from 'atom-nextjs';
+
+const { response, success, message } = await getProject(process.env.ATOM_PROJECT_KEY!);
+
+if (success) {
+  // response.title – the project name
+  // response.posts – array of ClientPost objects
+  response.posts.forEach(post => {
+    console.log(post.title, post.teaser);
+  });
+}
+```
 
 ## What Atom handles, and what your app owns
 
-Atom is focused on one thing: managing and delivering blog content through an API. It does not host your site, inject scripts into your pages, or constrain your app's UI. The boundary is clear:
-
-**Atom owns:** content storage, the markdown editor, the REST API, project key authentication, and the `atom-nextjs` rendering components.
-
-**Your app owns:** routing, layout, styling, deployment, caching strategy, and any custom UI around the blog content.
-
-The SDK components are designed to drop into any layout. You can wrap `AtomPage` or `Atom` inside your own containers, apply your own CSS, or skip the pre-built components entirely and use the `getProject` / `getPost` functions to fetch raw data and render it however you want.
+Atom is focused purely on managing and delivering blog content. It does not host your site, inject scripts into your pages, or provide a visual editor for your app's UI. This boundary is intentional: Atom owns the content pipeline, and your Next.js app owns everything else (layout, styling, routing, and deployment).
