@@ -115,9 +115,9 @@ export default function Blog() {
 
 | Prop | Type | Default | Description |
 |---|---|---|---|
-| `projectKey` | `string` | **(required)** | Your Atom project key. The SDK sends this as a Bearer token to the Atom API. |
-| `baseRoute` | `string` | **(required)** | URL path prefix for post links. `"/blog"` means post `abc123` links to `/blog/abc123`. |
-| `title` | `boolean` | `true` | When `true`, renders your project title as an `<h1>` above the post grid. Set to `false` to provide your own heading. |
+| `projectKey` | `string` | **(required)** | Your Atom project key, sent as a Bearer token to the Atom API. |
+| `baseRoute` | `string` | **(required)** | URL path prefix for post links — `"/blog"` means post `abc123` links to `/blog/abc123`. |
+| `title` | `boolean` | `true` | When `true`, renders your project title as an `<h1>` above the post grid; set to `false` to provide your own heading. |
 
 ### Why call `cookies()`?
 
