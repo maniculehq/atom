@@ -38,10 +38,11 @@ export default function Blog() {
 
 `AtomPage` props:
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `projectKey` | `string` | The project key from your Atom dashboard. Authenticates requests to the Atom API. |
-| `baseRoute` | `string` | The base path for post links (e.g. `"/blog"` produces links like `/blog/post-id`). |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | The project key from your Atom dashboard. Authenticates requests to the Atom API. |
+| `baseRoute` | `string` | — | The base path for post links (e.g. `"/blog"` produces links like `/blog/post-id`). |
+| `title` | `boolean` | `true` | Whether to render the project title as an `<h1>` above the post list. Set to `false` to supply your own heading. |
 
 **Display a single post** — `Atom` fetches and renders one post by its ID:
 
@@ -65,12 +66,14 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
 `Atom` props:
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `projectKey` | `string` | The project key from your Atom dashboard. Authenticates requests to the Atom API. |
-| `postId` | `string` | The ID of the post to fetch and render (typically from a dynamic route parameter). |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | The project key from your Atom dashboard. Authenticates requests to the Atom API. |
+| `postId` | `string` | — | The ID of the post to fetch and render (typically from a dynamic route parameter). |
+| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins for MDX processing. `remark-gfm` is always included. |
+| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins for MDX processing. `rehype-sanitize` is always included. |
 
-`generatePostMetadata(projectKey, postId)` is a helper that fetches a post's title, description, and other fields and returns a Next.js-compatible `Metadata` object. Export it as `generateMetadata` in your route to get automatic `<title>` and `<meta>` tags for each post.
+`generatePostMetadata(projectKey, postId)` is a helper that fetches a post and returns a Next.js-compatible `Metadata` object containing `title`, `description` (from the post's teaser), `keywords`, and `authors`. Export it as `generateMetadata` in your route to get automatic `<title>` and `<meta>` tags for each post.
 
 ## Why Suspense?
 
