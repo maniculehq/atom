@@ -83,8 +83,20 @@ Used internally by `AtomPage`, but exported so you can build custom list layouts
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `post` | `ClientPost` | *required* | A post object from the project's `posts` array. See `getProject` below for the shape. |
+| `post` | `ClientPost` | *required* | A post object from the project's `posts` array. |
 | `baseRoute` | `string` | *required* | URL prefix for the post link. |
+
+`ClientPost` has the following fields:
+
+| Field | Type |
+|-------|------|
+| `id` | `string` |
+| `title` | `string` |
+| `author` | `string` |
+| `teaser` | `string` |
+| `image` | `string \| null` (optional) |
+| `createdAt` | `Date` |
+| `updatedAt` | `Date` |
 
 ### `AtomBody` – render markdown to HTML
 
@@ -106,7 +118,7 @@ Beyond the components, `atom-nextjs` exports helpers you can use directly.
 | Export | Signature | Purpose |
 |--------|-----------|---------|
 | `generatePostMetadata` | `(projectKey: string, postId: string) → Promise<Metadata>` | Returns a Next.js `Metadata` object for a post — useful inside a route's `generateMetadata` function. |
-| `generateSitemap` | `(projectKey: string, blogRoute: string) → Promise<MetadataRoute.Sitemap>` | Returns sitemap entries for all posts in a project. `blogRoute` is the full base URL (e.g. `"https://example.com/blog"`). |
+| `generateSitemap` | `(projectKey: string, blogRoute: string) → Promise<Array<{ url, lastModified, priority }>>` | Returns sitemap entries for all posts in a project, plus an entry for the blog index route itself. Compatible with Next.js `MetadataRoute.Sitemap`. `blogRoute` is the full base URL (e.g. `"https://example.com/blog"`). |
 
 ### Data fetching
 
