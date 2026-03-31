@@ -2,7 +2,11 @@
 
 ## Overview
 
-Atom is a headless CMS built specifically for Next.js. It consists of two parts: (1) a Next.js dashboard web application where users create projects and manage blog posts via a markdown editor, and (2) a companion NPM package (`atom-nextjs`) that provides React server components for rendering blog content in any Next.js app. The stack is Next.js 14 (App Router), MongoDB (via Mongoose), Lucia for session-based auth, Upstash Redis for API rate limiting, Tailwind CSS with shadcn/ui components, and Argon2 for password hashing. The app is deployed on Netlify/Vercel at `cmsatom.netlify.app` / `atomcms.vercel.app`.
+Atom is a headless CMS built specifically for Next.js. It consists of two parts: (1) a Next.js dashboard web application where users create projects and manage blog posts via a markdown editor, and (2) a companion NPM package (`atom-nextjs`) that provides React server components for rendering blog content in any Next.js app.
+
+The core stack is Next.js 14 (App Router), MongoDB via Mongoose, Lucia v3 for session-based authentication, Upstash Redis for API rate limiting, Tailwind CSS with shadcn/ui components, and Argon2 for password hashing. The dashboard is deployed at `cmsatom.netlify.app`.
+
+Users sign up on the dashboard, create a "project" (a named collection of posts), write markdown content, and receive a `project_key`. They then install `atom-nextjs` in their own Next.js site and pass that key to pre-built server components (`AtomPage`, `AtomPost`) which fetch and render blog content directly from the Atom API.
 
 ## File Tree
 
