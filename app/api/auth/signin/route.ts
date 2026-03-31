@@ -31,7 +31,7 @@ export const POST = async (request: NextRequest) => {
       password
     );
 
-    if (!isPasswordSame) throw new Error("Password is incorrect.");
+    if (!isPasswordSame) throw new Error("Password is incorrect. Please try again");
 
     const userDocument = await UserDocumentsRef.findOne({
       _id: emailCredentialDoc._id,
