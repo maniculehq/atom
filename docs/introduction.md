@@ -12,6 +12,24 @@ The system has two parts that communicate through an API key.
 
 **The `atom-nextjs` SDK** is what you install in your own site. Drop in two server components (`AtomPage` to list posts and `AtomPost` to display a single post), pass them your project key, and they fetch and render your content directly from the Atom API at build or request time.
 
+## Prerequisites
+
+The SDK components use Tailwind CSS utility classes for layout and styling, and the `prose` class from `@tailwindcss/typography` for post body content. Your Next.js app needs both installed and configured before the components will render correctly.
+
+If you don't already have Tailwind CSS set up, follow the [Next.js Tailwind installation guide](https://tailwindcss.com/docs/guides/nextjs), then add the typography plugin:
+
+```bash
+npm install @tailwindcss/typography
+```
+
+```js
+// tailwind.config.js
+module.exports = {
+  // ...
+  plugins: [require('@tailwindcss/typography')],
+};
+```
+
 ## Add a blog in two files
 
 Install the SDK:
@@ -60,17 +78,20 @@ export default function BlogPage({ params }: { params: { id: string } }) {
 
 **`AtomPage`** — lists all posts in a project.
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `projectKey` | `string` | Your project's API key, used to authenticate requests to the Atom API. |
-| `baseRoute` | `string` | The base path for post links (e.g. `"/blog"` generates links like `/blog/post-id`). |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | Your project's API key, used to authenticate requests to the Atom API. |
+| `baseRoute` | `string` | — | The base path for post links (e.g. `"/blog"` generates links like `/blog/post-id`). |
+| `title` | `boolean` | `true` | When `true`, renders the project title as an `<h1>` above the post list. Set to `false` to hide it. |
 
 **`AtomPost`** — renders a single post.
 
-| Prop | Type | Description |
-|------|------|-------------|
-| `projectKey` | `string` | Your project's API key, used to authenticate requests to the Atom API. |
-| `postId` | `string` | The unique identifier of the post to fetch and render. |
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `projectKey` | `string` | — | Your project's API key, used to authenticate requests to the Atom API. |
+| `postId` | `string` | — | The unique identifier of the post to fetch and render. |
+| `remarkPlugins` | `any[]` | `[]` | Additional remark plugins passed to the MDX compiler. `remark-gfm` is always included. |
+| `rehypePlugins` | `any[]` | `[]` | Additional rehype plugins passed to the MDX compiler. `rehype-sanitize` is always included. |
 
 Each component also has a companion loading skeleton (`AtomLoadingSkeleton` and `AtomArticleSkeleton`) designed to be passed as a `<Suspense>` fallback.
 
