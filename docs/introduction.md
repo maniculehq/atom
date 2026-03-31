@@ -127,6 +127,13 @@ type ApiResponse<T> = {
 };
 ```
 
+When using these lower-level functions, you can also inspect rate limiting headers from the HTTP response. The Atom API includes the following headers that help you monitor your usage:
+
+- `X-RateLimit-Limit`: The maximum number of requests allowed per time window
+- `X-RateLimit-Remaining`: The number of requests remaining in the current window
+- `X-RateLimit-Reset`: Unix timestamp when the rate limit window resets
+- `Retry-After`: Number of seconds to wait before retrying (only present when rate limited)
+
 A `Post` (returned by `getPost`) has this shape:
 
 ```ts
