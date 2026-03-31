@@ -8,7 +8,7 @@ KEEP SERVERSIDE RENDERING BECAUSE OF API KEY
 
 */
 
-export const Atom = async ({
+export const AtomPost = async ({
   projectKey,
   postId,
   remarkPlugins,

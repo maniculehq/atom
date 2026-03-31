@@ -1,4 +1,4 @@
-import { Atom, AtomArticleSkeleton, generatePostMetadata } from "atom-nextjs";
+import { AtomPost, AtomArticleSkeleton, generatePostMetadata } from "atom-nextjs";
 import { MainContainer } from "@/components/containers/MainContainer";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
@@ -20,7 +20,7 @@ export default function BlogPage({ params }: BlogParams) {
   return (
     <MainContainer>
       <Suspense fallback={<AtomArticleSkeleton />}>
-        <Atom projectKey={process.env.ATOM_PROJECT_KEY!} postId={params.id} />
+        <AtomPost projectKey={process.env.ATOM_PROJECT_KEY!} postId={params.id} />
       </Suspense>
     </MainContainer>
   );
