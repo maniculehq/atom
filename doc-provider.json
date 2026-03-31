@@ -1,0 +1,10 @@
+{
+  "name": "plain",
+  "configFile": null,
+  "fileExtension": ".md",
+  "navConfigFile": "docs/nav.json",
+  "navStrategy": "manicule-nav-json",
+  "docsDir": "docs",
+  "frontmatterFields": [],
+  "usesMdxComponents": false
+}
