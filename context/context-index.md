@@ -2,443 +2,473 @@
 
 ## Overview
 
-Atom is a headless CMS built for Next.js. It lets users create blog projects, write markdown posts in a dashboard, and render them in their own Next.js sites via a companion SDK package (`atom-nextjs`). The main app is a Next.js 14 App Router project using MongoDB (Mongoose), Lucia for session-based auth, Upstash Redis for rate limiting, Tailwind CSS, shadcn/ui components, and Argon2 password hashing. The codebase also contains the `atom-nextjs` npm package as a sub-package.
-
-The repository is structured as a monorepo: the root is a Next.js 14 App Router application (the Atom dashboard and API at `app/`), with a publishable npm package at `packages/atom-nextjs/` that provides React server components (`Atom`, `AtomPage`, `AtomBody`) and helper functions (`getPost`, `getProject`, `generatePostMetadata`, `generateSitemap`) for rendering blog content. The dashboard exposes 14 REST API endpoints under `/api/` for auth, post, and project management. Data is stored in four MongoDB collections (`credentials`, `documents`, `projects`, `sessions`) accessed via Mongoose, with Lucia v3 handling session-cookie authentication for dashboard users and Bearer `project_key` tokens authenticating SDK consumers. Rate limiting is enforced on all API routes through Upstash Redis middleware (30 requests/minute per IP).
+Atom is a headless CMS built specifically for Next.js. It consists of two parts: (1) a Next.js dashboard web application where users create projects and manage blog posts via a markdown editor, and (2) a companion NPM package (`atom-nextjs`) that provides React server components for rendering blog content in any Next.js app. The stack is Next.js 14 (App Router), MongoDB (via Mongoose), Lucia for session-based auth, Upstash Redis for API rate limiting, Tailwind CSS with shadcn/ui components, and Argon2 for password hashing. The app is deployed on Netlify/Vercel at `cmsatom.netlify.app` / `atomcms.vercel.app`.
 
 ## File Tree
 
 ```
 /source
-├── app/                          # Next.js App Router pages & API routes
-│   ├── layout.tsx                # Root layout (Montserrat font, Toaster)
-│   ├── page.tsx                  # Landing/marketing page
-│   ├── globals.css               # Tailwind + CSS variables (shadcn theme)
+├── app/                            # Next.js App Router pages & API routes
+│   ├── layout.tsx                  # Root layout (Montserrat font, Toaster)
+│   ├── page.tsx                    # Landing/marketing page
+│   ├── globals.css                 # Tailwind + CSS variables (shadcn theme)
 │   ├── favicon.ico
-│   ├── robots.ts                 # SEO robots.txt generation
-│   ├── sitemap.ts                # Dynamic sitemap using atom-nextjs SDK
-│   ├── signin/page.tsx           # Sign-in page
-│   ├── signup/page.tsx           # Sign-up page
-│   ├── pricing/page.tsx          # Pricing plans page
+│   ├── robots.ts                   # SEO robots.txt config
+│   ├── sitemap.ts                  # Dynamic sitemap via atom-nextjs
+│   ├── signin/page.tsx             # Sign-in page
+│   ├── signup/page.tsx             # Sign-up page
+│   ├── pricing/page.tsx            # Pricing plans page
 │   ├── blog/
-│   │   ├── page.tsx              # Blog listing (uses AtomPage from SDK)
-│   │   └── [id]/page.tsx         # Single blog post (uses Atom from SDK)
-│   ├── app/                      # Authenticated dashboard area
-│   │   ├── layout.tsx            # ProtectedRoute wrapper
-│   │   ├── page.tsx              # Projects list page
-│   │   ├── projects/[id]/page.tsx # Single project editor
+│   │   ├── page.tsx                # Public blog listing (uses atom-nextjs AtomPage)
+│   │   └── [id]/page.tsx           # Single blog post (uses atom-nextjs AtomPost)
+│   ├── app/                        # Authenticated dashboard area
+│   │   ├── layout.tsx              # Wraps children in ProtectedRoute
+│   │   ├── page.tsx                # Projects list (dashboard home)
+│   │   ├── projects/[id]/page.tsx  # Single project view (post editor)
 │   │   └── settings/
-│   │       ├── page.tsx          # User settings
-│   │       └── billing/page.tsx  # Billing (placeholder)
-│   └── api/                      # API route handlers
+│   │       ├── page.tsx            # User settings (name, delete account)
+│   │       └── billing/page.tsx    # Billing page (coming soon)
+│   └── api/                        # REST API routes
 │       ├── auth/
-│       │   ├── signup/route.ts   # POST — register user
-│       │   ├── signin/route.ts   # POST — login user
-│       │   ├── signout/route.ts  # POST — logout user
-│       │   ├── delete/route.ts   # DELETE — delete user account
+│       │   ├── signup/route.ts     # POST — user registration
+│       │   ├── signin/route.ts     # POST — user login
+│       │   ├── signout/route.ts    # POST — session invalidation
+│       │   ├── delete/route.ts     # DELETE — delete user & all data
 │       │   └── user/
-│       │       ├── get/route.ts  # GET — fetch current user
-│       │       └── update/route.ts # PATCH — update user profile
+│       │       ├── get/route.ts    # GET — fetch current user document
+│       │       └── update/route.ts # PATCH — update user name
 │       ├── posts/
-│       │   ├── create/route.ts   # POST — create post in project
-│       │   ├── delete/route.ts   # DELETE — delete post from project
-│       │   ├── get/single/route.ts # GET — get single post (Bearer auth)
-│       │   └── update/route.ts   # PATCH — update post
+│       │   ├── create/route.ts     # POST — create post in a project
+│       │   ├── delete/route.ts     # DELETE — remove post from project
+│       │   ├── get/single/route.ts # GET — get single post (by project_key Bearer token)
+│       │   └── update/route.ts     # PATCH — update post fields
 │       └── projects/
-│           ├── create/route.ts   # POST — create project
-│           ├── delete/route.ts   # DELETE — delete project
+│           ├── create/route.ts     # POST — create a project
+│           ├── delete/route.ts     # DELETE — delete project & refs
 │           └── get/single/
-│               ├── route.ts      # GET — get project (session or Bearer)
-│               └── client/route.ts # GET — get project for client SDK (Bearer)
-├── components/                   # React components
-│   ├── cards/PricingPlanCard.tsx
+│               ├── route.ts        # GET — get project (by session or Bearer)
+│               └── client/route.ts # GET — get project for client SDK (Bearer, sanitized)
+├── components/                     # React components
+│   ├── cards/PricingPlanCard.tsx   # Pricing plan display card
 │   ├── containers/
-│   │   ├── AppContainer.tsx      # Dashboard layout with sidebar
-│   │   ├── MainContainer.tsx     # Public pages layout with navbar + footer
-│   │   └── ProtectedRoute.tsx    # Server-side auth gate (redirects to /signin)
+│   │   ├── AppContainer.tsx        # Dashboard layout with sidebar
+│   │   ├── MainContainer.tsx       # Public page layout with navbar+footer
+│   │   └── ProtectedRoute.tsx      # Server component — redirects to /signin if no session
 │   ├── forms/
-│   │   ├── LoginForm.tsx         # Zod-validated login form
-│   │   └── SignupForm.tsx        # Zod-validated signup form
+│   │   ├── LoginForm.tsx           # Sign-in form (client component)
+│   │   └── SignupForm.tsx          # Sign-up form (client component)
 │   ├── misc/
-│   │   ├── NpmPackageComponent.tsx
-│   │   └── tracing-beam.tsx
+│   │   ├── NpmPackageComponent.tsx # npm install display widget
+│   │   └── tracing-beam.tsx        # Decorative animation (framer-motion)
 │   ├── modals/
-│   │   ├── CreatePostModal.tsx
-│   │   └── DeleteUserModal.tsx
-│   ├── nav/Navbar.tsx            # Main navbar (server component, auth-aware)
+│   │   ├── CreatePostModal.tsx     # Modal for creating a new post
+│   │   └── DeleteUserModal.tsx     # Modal to confirm account deletion
+│   ├── nav/Navbar.tsx              # Top navigation bar
 │   ├── pages/
 │   │   ├── projects/
-│   │   │   ├── ProjectComponent.tsx  # Project editor with sidebar + form
-│   │   │   ├── ProjectFormComponent.tsx # Post edit form
-│   │   │   └── ProjectPage.tsx       # Projects listing page
-│   │   └── settings/SettingsForm.tsx
+│   │   │   ├── ProjectComponent.tsx     # Project view with sidebar + editor
+│   │   │   ├── ProjectFormComponent.tsx # Post edit form (Zod validated)
+│   │   │   └── ProjectPage.tsx          # Projects list + create dialog
+│   │   └── settings/SettingsForm.tsx    # User settings form
 │   ├── sidebars/
-│   │   ├── AppSidebarNav.tsx
-│   │   └── ProjectComponentSidebar.tsx
+│   │   ├── AppSidebarNav.tsx            # Dashboard left nav sidebar
+│   │   └── ProjectComponentSidebar.tsx  # Post list sidebar within a project
 │   ├── tables/UserDocumentProjects/
-│   │   ├── columns.tsx
-│   │   └── table.tsx
-│   └── ui/                       # shadcn/ui primitives
+│   │   ├── columns.tsx                  # TanStack Table column definitions
+│   │   └── table.tsx                    # TanStack Table component
+│   └── ui/                              # shadcn/ui primitives
 │       ├── alert-dialog.tsx, button.tsx, carousel.tsx, dialog.tsx,
 │       │   dropdown-menu.tsx, form.tsx, input.tsx, label.tsx,
 │       │   markdown-editor.tsx, popover.tsx, sticky-scroll-reveal.tsx,
 │       │   table.tsx, textarea.tsx
-├── lib/                          # Shared libraries
-│   ├── types.ts                  # Core TypeScript types
-│   ├── contants.tsx              # Constants (plans, nav, API base URL)  [sic: "contants"]
-│   ├── utils.ts                  # cn() utility (clsx + tailwind-merge)
-│   ├── utils/validateEmail.ts    # Email regex validator
-│   ├── client/                   # Client-side API call helpers
-│   │   ├── auth/                 # deleteUser, loginUser, signoutUser, signupUser, updateUser
-│   │   ├── posts/                # createPost, deletePost, updatePost
-│   │   └── projects/             # createProject, deleteProject
-│   └── server/                   # Server-side utilities
+├── lib/
+│   ├── types.ts                    # Core TypeScript types
+│   ├── contants.tsx                # Plans, nav options, constants, base API URL
+│   ├── utils.ts                    # cn() utility (clsx + tailwind-merge)
+│   ├── utils/validateEmail.ts      # Email validation regex
+│   ├── client/                     # Client-side API helpers (axios)
+│   │   ├── auth/                   # loginUser, signupUser, signoutUser, deleteUser, updateUser
+│   │   ├── posts/                  # createPost, deletePost, updatePost
+│   │   └── projects/               # createProject, deleteProject
+│   └── server/                     # Server-side utilities
 │       ├── encoding/
-│       │   ├── encodePassword.ts  # Argon2 hashing with salt
-│       │   └── isPasswordValid.ts # Argon2 verification
+│       │   ├── encodePassword.ts   # Argon2 hash with env salt
+│       │   └── isPasswordValid.ts  # Argon2 verify
 │       ├── functions/
-│       │   ├── projects/getProject.ts  # Server-side project fetch
-│       │   └── user/fetchUser.ts       # Server-side user fetch
+│       │   ├── projects/getProject.ts  # Server-side project fetch (passes cookies)
+│       │   └── user/fetchUser.ts       # Server-side user fetch (passes cookies)
 │       ├── lucia/
-│       │   ├── init.ts            # Lucia auth initialization
-│       │   └── functions/validate-request.ts # Session validation (cached)
+│       │   ├── init.ts             # Lucia auth setup with MongoDB adapter
+│       │   └── functions/validate-request.ts  # Cached session validation
 │       ├── mongo/
-│       │   ├── init.ts            # Mongoose connection + model refs
-│       │   └── types/             # Mongoose schemas
+│       │   ├── init.ts             # MongoDB connection + model refs
+│       │   └── types/              # Mongoose schemas
 │       │       ├── userCredentials.ts
 │       │       ├── userDocuments.ts
 │       │       ├── userProjects.ts
 │       │       └── userSessions.ts
-│       ├── redis/init.ts          # Upstash Redis + Ratelimit setup
+│       ├── redis/init.ts           # Upstash Redis + rate limiter (30 req/min)
 │       └── utils/
-│           ├── generateProjectKey.ts
-│           ├── validateProjectKey.ts
-│           └── validateRequestFetchUser.ts
-├── middleware.ts                  # Rate limiting on /api/* routes
+│           ├── generateProjectKey.ts       # Random base64 project key
+│           ├── validateProjectKey.ts       # Validate project key exists
+│           └── validateRequestFetchUser.ts # Validate session + fetch user doc
 ├── packages/
-│   └── atom-nextjs/              # NPM SDK package (atom-nextjs)
-│       ├── package.json          # v0.3.1, built with tsdx
-│       ├── README.md
+│   └── atom-nextjs/                # Published NPM package (atom-nextjs)
+│       ├── package.json            # v0.3.1, built with tsdx
 │       ├── src/
-│       │   ├── index.tsx          # Package exports
+│       │   ├── index.tsx           # Package exports
 │       │   ├── components/
-│       │   │   ├── Atom.tsx       # Single post renderer (SSR)
-│       │   │   ├── AtomBody.tsx   # MDX body compiler
-│       │   │   ├── AtomPage.tsx   # Post listing page
-│       │   │   ├── AtomPostCard.tsx # Post card link
-│       │   │   ├── AtomLoadingSkeleton.tsx
-│       │   │   └── AtomArticleSkeleton.tsx
+│       │   │   ├── Atom.tsx        # AtomPost — renders single blog post (server component)
+│       │   │   ├── AtomBody.tsx    # MDX body renderer (compileMDX with remark-gfm)
+│       │   │   ├── AtomPage.tsx    # Blog listing page (server component)
+│       │   │   ├── AtomPostCard.tsx # Individual post card (link)
+│       │   │   ├── AtomLoadingSkeleton.tsx  # Loading skeleton for blog list
+│       │   │   └── AtomArticleSkeleton.tsx  # Loading skeleton for article
 │       │   └── lib/
-│       │       ├── client/
-│       │       │   ├── generatePostMetadata.ts
-│       │       │   ├── generateSitemap.ts
-│       │       │   ├── getPost.ts
-│       │       │   └── getProject.ts
-│       │       ├── constants.ts   # baseAPIRoute (cmsatom.netlify.app)
-│       │       └── types.ts       # Post, ClientPost, ClientProject, ApiResponse
-│       └── tsconfig.json
-├── bruno/                        # Bruno API collection for testing
+│       │       ├── types.ts        # Post, ClientPost, ClientProject, ApiResponse
+│       │       ├── constants.ts    # baseAPIRoute (hardcoded to cmsatom.netlify.app)
+│       │       └── client/
+│       │           ├── getPost.ts           # Fetch single post via Bearer token
+│       │           ├── getProject.ts        # Fetch project listing via Bearer token
+│       │           ├── generatePostMetadata.ts  # Next.js metadata generation
+│       │           └── generateSitemap.ts   # Sitemap generation helper
+│       └── README.md               # Package documentation
+├── bruno/                          # Bruno API collection for testing
 │   ├── bruno.json
 │   ├── environments/Development.bru
-│   └── Routes/                   # API test files
-├── docs/                         # Documentation (plain markdown)
-│   ├── nav.json                  # Navigation config
-│   ├── introduction.md
-│   └── omak.md                   # Pipeline test page
-├── package.json                  # Main app package
-├── next.config.mjs               # Cache-Control headers config
-├── tailwind.config.ts
+│   └── Routes/                     # API test requests
+├── docs/                           # Documentation files
+│   ├── nav.json                    # Navigation config
+│   ├── introduction.md             # Introduction doc
+│   └── omak.md                     # Pipeline test page
+├── middleware.ts                    # Next.js middleware — rate limits /api/* routes
+├── next.config.mjs                 # Cache-Control: no-store headers
+├── package.json                    # Root package config
+├── tailwind.config.ts              # Tailwind config (shadcn/ui theme)
 ├── tsconfig.json
-├── components.json               # shadcn/ui config
 ├── postcss.config.js
-└── middleware.ts                  # Rate limiter middleware
+└── components.json                 # shadcn/ui config
 ```
 
 ## Architecture
 
-### System Overview
+### System Design
 
-Atom is a two-part system:
+Atom is a **two-part system**:
 
-1. **Atom Dashboard (this repo's main app)** — A Next.js 14 App Router application where users sign up, create "projects" (blog containers), and write/edit posts via a markdown editor. The dashboard exposes a REST API that both the dashboard itself and the SDK consume.
+1. **Dashboard Web App** (this repo root) — A Next.js 14 App Router application where authenticated users manage their CMS projects and posts. Users sign up, create "projects" (each a named collection of blog posts), write content in a markdown editor, and receive a `project_key` they can use to fetch content from their own Next.js sites.
 
-2. **`atom-nextjs` SDK (sub-package)** — An npm package that end-users install in their own Next.js apps. It provides server components (`Atom`, `AtomPage`) that fetch content from the Atom API using a `project_key` as a Bearer token.
+2. **Client SDK** (`packages/atom-nextjs/`) — An NPM package (`atom-nextjs`) that provides async server components (`AtomPage`, `AtomPost`) and utility functions (`generatePostMetadata`, `generateSitemap`) for rendering Atom-hosted blog content in any Next.js app.
 
 ### Data Flow
 
-```
-User's Next.js App          Atom Dashboard/API              MongoDB
-      |                           |                           |
-      |-- Bearer project_key ---->|                           |
-      |                           |--- Mongoose query ------->|
-      |<-- JSON (posts/project) --|<-- Document --------------|
-      |                           |                           |
-```
+1. User signs up → creates a Project → gets a `project_key` (random base64 token prefixed with `atom-`)
+2. User creates Posts within the Project via the dashboard markdown editor
+3. In their own Next.js app, user installs `atom-nextjs`, passes `project_key` to `AtomPage`/`AtomPost` components
+4. SDK components make server-side `fetch()` calls to Atom's API (Bearer `project_key`) → fetch project/post data → render MDX content
 
-Dashboard users authenticate via session cookies (Lucia). SDK consumers authenticate via Bearer `project_key` tokens.
+### Authentication Flow
 
-### Key Architectural Patterns
+- **Lucia v3** manages sessions with a MongoDB adapter
+- Passwords are hashed with **Argon2** + an env-variable salt (`HASH_SALT`)
+- Session cookies are set on signup/signin; `validateRequest()` (cached via React `cache()`) reads the cookie and validates against Lucia
+- The `/app/*` routes are protected by `ProtectedRoute` server component which redirects to `/signin` if no session
+- API routes that modify data call `validateRequest()` and check `user.id === project.creator_uid` for authorization
 
-- **Server Components**: The Navbar, ProtectedRoute, and page-level data fetching are all async server components.
-- **Client Components**: Forms, modals, project editors are `"use client"` with `react-hook-form` + `zod` for validation.
-- **API Route Pattern**: All API routes follow a consistent `ApiResponse<T>` response shape (`{ success, message, response }`).
-- **Dual Auth**: API routes support both session-cookie auth (dashboard) and Bearer token auth (SDK clients).
-- **MongoDB Transactions**: User signup, project creation, and deletion use MongoDB sessions/transactions for atomicity.
-- **Rate Limiting**: Middleware applies Upstash Redis sliding window rate limiting (30 req/min) on all `/api/*` routes.
+### API Authentication Modes
+
+- **Session-based**: Dashboard API routes (POST/PATCH/DELETE) use Lucia session cookies
+- **Bearer token**: Public read routes (`/api/posts/get/single`, `/api/projects/get/single/client`) accept `Authorization: Bearer <project_key>` header — used by the `atom-nextjs` SDK
+
+### Rate Limiting
+
+- Middleware at `middleware.ts` rate-limits all `/api/*` routes to **30 requests per minute per IP** using Upstash Redis sliding window
+
+### Database
+
+- **MongoDB** via Mongoose with 4 collections:
+  - `credentials` — email/password hash (UserCredentials)
+  - `documents` — user profile + project references (UserDocument)
+  - `projects` — project with embedded posts array (Project)
+  - `sessions` — Lucia sessions (Session)
+- Multi-document transactions (mongoose sessions) used for signup, project creation/deletion, user deletion
 
 ## Key Concepts
 
-- **Project** — A named collection of blog posts, identified by `_id` (UUID) and `project_key` (random base64 token). Created by authenticated users.
-  - Defined in: `lib/types.ts:L46-L54`
-  - Schema: `lib/server/mongo/types/userProjects.ts`
-  - API: `app/api/projects/create/route.ts`, `app/api/projects/delete/route.ts`, `app/api/projects/get/single/route.ts`
+- **Project** — A named collection of blog posts, identified by a UUID `_id` and authenticated via a `project_key`
+  - Defined in: `lib/types.ts:L48-L56`, schema at `lib/server/mongo/types/userProjects.ts`
+  - Created via: `app/api/projects/create/route.ts`
 
-- **Post** — A blog post embedded within a Project document as an array element. Contains title, author, body (markdown), image, keywords, teaser.
-  - Defined in: `lib/types.ts:L10-L22`
-  - Schema: `lib/server/mongo/types/userProjects.ts` (postSchema)
-  - API: `app/api/posts/create/route.ts`, `app/api/posts/update/route.ts`, `app/api/posts/delete/route.ts`, `app/api/posts/get/single/route.ts`
+- **Post** — A blog post with markdown body, embedded within a Project's `posts` array
+  - Defined in: `lib/types.ts:L12-L24`, schema at `lib/server/mongo/types/userProjects.ts:L7-L47`
+  - Created via: `app/api/posts/create/route.ts`
 
-- **UserDocument** — User profile data (name, email, plan, projects list).
-  - Defined in: `lib/types.ts:L56-L64`
-  - Schema: `lib/server/mongo/types/userDocuments.ts`
+- **UserDocument** — User profile with plan, name, email, and array of project references
+  - Defined in: `lib/types.ts:L58-L67`, schema at `lib/server/mongo/types/userDocuments.ts`
 
-- **UserCredentials** — Authentication credentials (email, password_hash).
-  - Defined in: `lib/types.ts:L3-L8`
-  - Schema: `lib/server/mongo/types/userCredentials.ts`
+- **UserCredentials** — Login credentials (email + argon2 hash)
+  - Defined in: `lib/types.ts:L3-L10`, schema at `lib/server/mongo/types/userCredentials.ts`
 
-- **Plan** — Subscription tier (`"single" | "startup" | "business"`). Controls max projects, posts, and body length.
-  - Defined in: `lib/types.ts:L24`, `lib/contants.tsx:L3` (plans array)
-  - Plan details: `lib/contants.tsx:L33-L86` (planDetails array)
+- **Plan** — Pricing tier (`single` | `startup` | `business`) controlling project/post limits
+  - Defined in: `lib/contants.tsx:L5` (plans array), details at `lib/contants.tsx:L33-L88`
+  - Only `single` (free) is currently active; `startup` and `business` are `disabled: true`
 
-- **Session** — Lucia auth session stored in MongoDB.
-  - Defined in: `lib/types.ts:L66-L69`
-  - Schema: `lib/server/mongo/types/userSessions.ts`
+- **Project Key** — Random base64 token prefixed with `atom-`, used as Bearer token for public API access
+  - Generated at: `lib/server/utils/generateProjectKey.ts`
 
-- **ApiResponse<T>** — Standard API response type used across all routes.
-  - Defined in: `app/api/auth/signup/route.ts:L17-L21`
+- **ApiResponse<T>** — Standard API response envelope: `{ success, message, response: T }`
+  - Defined in: `app/api/auth/signup/route.ts:L16-L20`
 
 ## API Surface
 
-All API routes are under `/api/` and return `ApiResponse<T>` JSON.
+All routes are under `/api/` and rate-limited via middleware.
 
 ### Auth Routes
 
-| Method | Path | Purpose | Auth | File |
-|--------|------|---------|------|------|
-| POST | `/api/auth/signup` | Register new user | None | `app/api/auth/signup/route.ts` |
-| POST | `/api/auth/signin` | Login user | None | `app/api/auth/signin/route.ts` |
-| POST | `/api/auth/signout` | Logout user | Session | `app/api/auth/signout/route.ts` |
-| DELETE | `/api/auth/delete` | Delete user account | Session + password | `app/api/auth/delete/route.ts` |
-| GET | `/api/auth/user/get` | Get current user document | Session | `app/api/auth/user/get/route.ts` |
-| PATCH | `/api/auth/user/update` | Update user name | Session | `app/api/auth/user/update/route.ts` |
-
-### Post Routes
-
-| Method | Path | Purpose | Auth | File |
-|--------|------|---------|------|------|
-| POST | `/api/posts/create?project_id=` | Create post | Session | `app/api/posts/create/route.ts` |
-| DELETE | `/api/posts/delete?project_id=&post_id=` | Delete post | Session | `app/api/posts/delete/route.ts` |
-| PATCH | `/api/posts/update?project_id=&post_id=` | Update post | Session | `app/api/posts/update/route.ts` |
-| GET | `/api/posts/get/single?post_id=` | Get single post | Bearer token | `app/api/posts/get/single/route.ts` |
+| Method | Path | Handler | Purpose |
+|--------|------|---------|---------|
+| POST | `/api/auth/signup` | `app/api/auth/signup/route.ts` | Register user (email, password, first/last name) |
+| POST | `/api/auth/signin` | `app/api/auth/signin/route.ts` | Login with email+password |
+| POST | `/api/auth/signout` | `app/api/auth/signout/route.ts` | Invalidate session |
+| DELETE | `/api/auth/delete` | `app/api/auth/delete/route.ts` | Delete account (requires password confirmation) |
+| GET | `/api/auth/user/get` | `app/api/auth/user/get/route.ts` | Get current user document |
+| PATCH | `/api/auth/user/update` | `app/api/auth/user/update/route.ts` | Update user name |
 
 ### Project Routes
 
-| Method | Path | Purpose | Auth | File |
-|--------|------|---------|------|------|
-| POST | `/api/projects/create` | Create project | Session | `app/api/projects/create/route.ts` |
-| DELETE | `/api/projects/delete?project_id=` | Delete project | Session | `app/api/projects/delete/route.ts` |
-| GET | `/api/projects/get/single?project_id=` | Get project (dashboard) | Session or Bearer | `app/api/projects/get/single/route.ts` |
-| GET | `/api/projects/get/single/client` | Get project (SDK client) | Bearer token | `app/api/projects/get/single/client/route.ts` |
+| Method | Path | Handler | Purpose |
+|--------|------|---------|---------|
+| POST | `/api/projects/create` | `app/api/projects/create/route.ts` | Create project (session auth) |
+| DELETE | `/api/projects/delete?project_id=` | `app/api/projects/delete/route.ts` | Delete project (session auth, owner check) |
+| GET | `/api/projects/get/single?project_id=` | `app/api/projects/get/single/route.ts` | Get project (session auth OR Bearer token) |
+| GET | `/api/projects/get/single/client` | `app/api/projects/get/single/client/route.ts` | Get project for SDK (Bearer only, sanitized — strips `project_key`, `creator_uid`) |
 
-### Page Routes
+### Post Routes
 
-| Path | Purpose | File |
-|------|---------|------|
-| `/` | Landing/marketing page | `app/page.tsx` |
-| `/signin` | Login page | `app/signin/page.tsx` |
-| `/signup` | Registration page | `app/signup/page.tsx` |
-| `/pricing` | Pricing plans | `app/pricing/page.tsx` |
-| `/blog` | Blog listing (uses own SDK) | `app/blog/page.tsx` |
-| `/blog/[id]` | Single blog post | `app/blog/[id]/page.tsx` |
-| `/app` | Dashboard: projects list | `app/app/page.tsx` |
-| `/app/projects/[id]` | Dashboard: project editor | `app/app/projects/[id]/page.tsx` |
-| `/app/settings` | Dashboard: user settings | `app/app/settings/page.tsx` |
-| `/app/settings/billing` | Dashboard: billing (placeholder) | `app/app/settings/billing/page.tsx` |
+| Method | Path | Handler | Purpose |
+|--------|------|---------|---------|
+| POST | `/api/posts/create?project_id=` | `app/api/posts/create/route.ts` | Create post in project (session auth, owner check) |
+| DELETE | `/api/posts/delete?project_id=&post_id=` | `app/api/posts/delete/route.ts` | Delete post (session auth, owner check) |
+| GET | `/api/posts/get/single?post_id=` | `app/api/posts/get/single/route.ts` | Get single post (Bearer `project_key`) |
+| PATCH | `/api/posts/update?project_id=&post_id=` | `app/api/posts/update/route.ts` | Update post fields (session auth, owner check) |
 
 ## Data Model
 
-### MongoDB Collections
+### UserCredentials (`lib/types.ts:L3-L10`)
+```
+email: string (unique, lowercase, trimmed)
+password_hash: string
+_id: string (UUID)
+createdAt: Date
+updatedAt: Date
+```
 
-| Collection | Mongoose Model | TypeScript Type | Schema File |
-|------------|---------------|-----------------|-------------|
-| `credentials` | `UserCredentialsRef` | `UserCredentials` | `lib/server/mongo/types/userCredentials.ts` |
-| `documents` | `UserDocumentsRef` | `UserDocument` | `lib/server/mongo/types/userDocuments.ts` |
-| `projects` | `ProjectsRef` | `Project` | `lib/server/mongo/types/userProjects.ts` |
-| `sessions` | `SessionRef` | `Session` | `lib/server/mongo/types/userSessions.ts` |
+### UserDocument (`lib/types.ts:L58-L67`)
+```
+_id: string (UUID, same as credentials)
+first_name: string
+last_name: string
+email: string
+plan: "single" | "startup" | "business"
+projects: UserDocumentProjects[] (embedded array of project references)
+createdAt: Date
+updatedAt: Date
+```
 
-### Type Definitions (lib/types.ts)
+### UserDocumentProjects (`lib/types.ts:L30-L37`)
+```
+id: string (project UUID)
+title: string
+createdAt: Date
+updatedAt: Date
+creator: { uid: string, email: string }
+```
 
-- **UserCredentials**: `{ email, password_hash, createdAt, updatedAt, _id }`
-- **Post**: `{ createdAt, id, updatedAt, title, author, body, image, creator_uid, keywords?, teaser }`
-- **UserDocumentProjects**: `{ id, title, createdAt, updatedAt, creator: { uid, email } }`
-- **Project**: `{ title, _id, posts: Post[], project_key, creator_uid, createdAt, updatedAt }`
-- **UserDocument**: `{ _id, first_name, last_name, createdAt, updatedAt, projects: UserDocumentProjects[], email, plan }`
-- **Session**: `{ user_id, expires_at }`
-- **PlanDetailsPlan**: `{ title, id, price, description, max_docs, max_body_length, features, max_projects, active, disabled }`
+### Project (`lib/types.ts:L48-L56`)
+```
+_id: string (UUID)
+title: string
+posts: Post[] (embedded array)
+project_key: string (atom-<base64>)
+creator_uid: string (user UUID)
+createdAt: Date
+updatedAt: Date
+```
+
+### Post (`lib/types.ts:L12-L24`)
+```
+id: string (UUID)
+title: string
+author: string
+body: string (markdown)
+image: string | null
+creator_uid: string
+keywords: string[]
+teaser: string
+createdAt: Date
+updatedAt: Date
+```
+
+### Session (`lib/types.ts:L69-L72`)
+```
+user_id: string
+expires_at: Date
+```
 
 ### Relationships
-- A **User** has one `UserCredentials` doc and one `UserDocument` doc (same `_id`).
-- A **UserDocument** embeds an array of `UserDocumentProjects` (denormalized project references).
-- A **Project** embeds an array of `Post` documents (posts are stored inside the project).
-- Projects reference their creator via `creator_uid`.
+- UserCredentials._id == UserDocument._id (1:1)
+- UserDocument.projects[] ← soft references to Project._id
+- Project.creator_uid → UserDocument._id (ownership)
+- Project.posts[] — embedded Post documents
+- Session.user_id → UserCredentials._id
 
 ## Auth & Middleware
 
-### Authentication (Lucia v3)
-- **Library**: Lucia v3 with MongoDB adapter
-- **Init**: `lib/server/lucia/init.ts` — Creates Lucia instance with MongoDB session/credential collections
-- **Session validation**: `lib/server/lucia/functions/validate-request.ts` — Cached function that reads session cookie, validates via Lucia, refreshes if needed
-- **Password hashing**: Argon2 with configurable `HASH_SALT` env var
-  - Encode: `lib/server/encoding/encodePassword.ts`
-  - Verify: `lib/server/encoding/isPasswordValid.ts`
+### Authentication Stack
+- **Lucia v3** (`lib/server/lucia/init.ts`) — session-based auth with MongoDB adapter
+- **Argon2** (`lib/server/encoding/`) — password hashing with env salt
+- **validateRequest** (`lib/server/lucia/functions/validate-request.ts`) — cached session validation via React `cache()`, reads `lucia.sessionCookieName` cookie
 
 ### Middleware
-- **File**: `middleware.ts`
-- **Scope**: Matches `/api/:path*` only
-- **Function**: Rate limits API requests using Upstash Redis (30 requests per minute per IP, sliding window)
-- **Rate limiter**: `lib/server/redis/init.ts`
+- `middleware.ts` — Matches `/api/*` routes only. Rate limits by IP (30/min) using Upstash Redis sliding window. Returns `ApiResponse` JSON on rate limit exceeded.
 
-### Route Protection
-- **ProtectedRoute**: `components/containers/ProtectedRoute.tsx` — Server component that validates session and redirects to `/signin` if unauthenticated. Used as layout wrapper for `/app/*` routes.
-- **API route auth**: Each API route calls `validateRequest()` individually to check sessions.
+### Protected Routes
+- `components/containers/ProtectedRoute.tsx` — Server component that validates session and redirects to `/signin` if unauthenticated. Used in `app/app/layout.tsx` to protect all `/app/*` pages.
+
+### API Authorization Pattern
+Every mutating API route follows this pattern:
+1. `connectToDatabase()`
+2. `validateRequest()` → get `user`
+3. If modifying a resource: verify `user.id === resource.creator_uid`
 
 ## Configuration
 
 | Variable | Purpose | Default | File |
 |----------|---------|---------|------|
-| `HASH_SALT` | Salt appended to passwords before Argon2 hashing | Required | `lib/server/encoding/encodePassword.ts` |
-| `MONGO_DB_URI` | MongoDB connection string | Required | `lib/contants.tsx`, `lib/server/mongo/init.ts` |
-| `ATOM_PROJECT_KEY` | Project key for Atom's own blog | Required | `app/blog/page.tsx`, `app/sitemap.ts` |
-| `UPSTASH_REDIS_REST_URL` | Upstash Redis REST API URL | Required | `lib/server/redis/init.ts` |
-| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis auth token | Required | `lib/server/redis/init.ts` |
-| `NEXT_PUBLIC_ENV` | Environment flag (`"dev"` or `"prod"`) | `"dev"` | `lib/contants.tsx` |
-| `ENV` | Environment flag (mentioned in README) | `"dev"` | README.md |
-
-### Base API URL Logic (`lib/contants.tsx:L28-L31`)
-- `prod`: `https://cmsatom.netlify.app/api`
-- `dev`: `http://localhost:3000/api`
-
-### SDK Base API URL (`packages/atom-nextjs/src/lib/constants.ts`)
-- Hardcoded to: `https://cmsatom.netlify.app/api`
+| `HASH_SALT` | Salt appended to passwords before Argon2 hashing | None (required) | `lib/server/encoding/encodePassword.ts` |
+| `MONGO_DB_URI` | MongoDB connection string | None (required) | `lib/contants.tsx:L30` |
+| `ATOM_PROJECT_KEY` | Project key for the app's own blog (self-hosting) | None (required) | `app/blog/page.tsx`, `app/sitemap.ts` |
+| `UPSTASH_REDIS_REST_URL` | Upstash Redis URL for rate limiting | None (required) | `lib/server/redis/init.ts` |
+| `UPSTASH_REDIS_REST_TOKEN` | Upstash Redis auth token | None (required) | `lib/server/redis/init.ts` |
+| `NEXT_PUBLIC_ENV` | `"dev"` or `"prod"` — controls base API URL | `"dev"` (→ localhost:3000) | `lib/contants.tsx:L28-L30` |
+| `NODE_ENV` | Standard Node env — controls session cookie `secure` flag | — | `lib/server/lucia/init.ts` |
 
 ## Dependencies
 
-### Main App (Notable)
+### Key Runtime Dependencies
 | Package | Purpose |
 |---------|---------|
-| `next` 14.1.0 | Framework |
+| `next` 14.1.0 | Framework (App Router) |
 | `lucia` 3.1.1 | Session-based authentication |
 | `@lucia-auth/adapter-mongodb` | Lucia MongoDB adapter |
 | `mongoose` 8.1.2 | MongoDB ODM |
-| `argon2` | Password hashing |
-| `@upstash/redis` + `@upstash/ratelimit` | Rate limiting |
-| `zod` + `@hookform/resolvers` + `react-hook-form` | Form validation |
-| `@tanstack/react-query` | Client-side data fetching |
+| `argon2` 0.40.1 | Password hashing |
+| `@upstash/redis` + `@upstash/ratelimit` | Redis-based rate limiting |
+| `atom-nextjs` 0.3.1 | Self-hosted blog rendering (own package) |
+| `axios` | HTTP client for server→API calls |
+| `zod` | Schema validation (forms) |
+| `react-hook-form` + `@hookform/resolvers` | Form management |
+| `@tanstack/react-query` | Client data fetching |
 | `@tanstack/react-table` | Data tables |
 | `@uiw/react-md-editor` | Markdown editor |
-| `react-markdown` + `remark-gfm` + `rehype-*` | Markdown rendering |
-| `zustand` | Client-side state management |
-| `axios` | HTTP client |
-| `atom-nextjs` | Own SDK package (also used by the app itself for its blog) |
+| `next-mdx-remote` | MDX rendering (used in atom-nextjs package) |
+| `zustand` | State management |
 | `framer-motion` | Animations |
-| `tailwindcss` + shadcn/ui (`@radix-ui/*`) | UI framework |
+| `react-hot-toast` | Toast notifications |
+| `react-syntax-highlighter` | Code highlighting |
+| `react-markdown` | Markdown rendering |
+| `react-icons` | Icon library |
+| `uuid` | UUID generation |
 
-### SDK Package (`atom-nextjs`)
-| Package | Purpose |
-|---------|---------|
-| `next` | Peer dependency |
-| `next-mdx-remote` | MDX compilation for post bodies |
-| `react-loading-skeleton` | Loading skeletons |
-| `remark-gfm` + `rehype-sanitize` | Markdown processing |
+### UI Components
+- **shadcn/ui** (Radix UI primitives + Tailwind) — configured in `components.json`, components in `components/ui/`
+- **Tailwind CSS** with `tailwindcss-animate` and `@tailwindcss/typography`
 
 ## Build & Run
 
-### Main App
 ```bash
-npm run dev      # Start dev server (localhost:3000)
-npm run build    # Production build
-npm run start    # Start production server
-npm run lint     # ESLint
+# Development
+npm run dev          # or bun dev
+
+# Build
+npm run build
+
+# Start production
+npm run start
+
+# Lint
+npm run lint
 ```
 
-### SDK Package (`packages/atom-nextjs`)
+### atom-nextjs package (local development)
 ```bash
-npm run start    # tsdx watch mode
+cd packages/atom-nextjs
+npm link              # Host locally
+cd ../..
+npm link atom-nextjs  # Connect to local version
+```
+
+### atom-nextjs package scripts
+```bash
+cd packages/atom-nextjs
+npm run start    # tsdx watch
 npm run build    # tsdx build
 npm run test     # tsdx test
-npm link         # Link locally for development
+npm run lint     # tsdx lint
 ```
-
-To develop the SDK locally with the main app:
-1. `cd packages/atom-nextjs && npm link`
-2. `cd ../.. && npm link atom-nextjs`
 
 ## Patterns & Conventions
 
 ### API Response Pattern
-All API routes return `ApiResponse<T>`:
-```typescript
-type ApiResponse<T = null> = {
-  success: boolean;
-  message: string | null;
-  response: T;
-};
+All API routes return `ApiResponse<T>` envelope:
+```ts
+{ success: boolean; message: string | null; response: T }
 ```
 
 ### Error Handling
-- API routes use try/catch blocks, returning `{ success: false, message: err.message }` on error.
-- Client-side helpers throw errors from API responses (`if (!data.success) throw new Error(data.message)`).
-- Toast notifications via `react-hot-toast` on client-side operations.
+- API routes use try/catch with `err.message || err` fallback
+- MongoDB duplicate key (code 11000) gets special handling in signup route
+- Client-side helpers throw on `!data.success`
 
-### Auth Pattern
-- Dashboard API routes: Call `validateRequest()` then check `if (!user) throw`.
-- Owner verification: Check `project.creator_uid === user.id` before mutations.
-- SDK-facing routes: Parse `Authorization: Bearer <project_key>` header.
+### File Organization
+- `lib/client/` — Browser-safe API call helpers (using axios)
+- `lib/server/` — Server-only code (auth, DB, encoding)
+- `app/api/` — API routes (Next.js App Router convention)
+- `app/app/` — Dashboard pages (protected by layout)
+- `components/` — Organized by purpose (containers, forms, modals, nav, pages, sidebars, tables, ui)
 
-### File Naming
-- API routes: `app/api/<resource>/<action>/route.ts`
-- Client helpers: `lib/client/<resource>/<action>.ts`
-- Server functions: `lib/server/functions/<resource>/<function>.ts`
-- MongoDB schemas: `lib/server/mongo/types/<collection>.ts`
-- UI components: `components/ui/<name>.tsx` (shadcn)
-- Page components: `components/pages/<section>/<Component>.tsx`
-- Note: Constants file has typo in name: `lib/contants.tsx` (missing "s")
+### Naming Conventions
+- Route files: `route.ts` with exported HTTP method handlers (POST, GET, DELETE, PATCH)
+- Types exported alongside routes (e.g., `CreatePostRequest`, `SignupRequestParams`)
+- MongoDB model refs suffixed with `Ref` (e.g., `UserCredentialsRef`, `ProjectsRef`)
+- Constants file is `contants.tsx` (note: typo in filename — "contants" not "constants")
 
 ### Component Patterns
-- Server components for data fetching and auth checks (Navbar, ProtectedRoute, page components)
-- Client components for interactive UI (`"use client"` directive)
-- Form validation with Zod schemas and react-hook-form
-- shadcn/ui for base UI components (Radix primitives + Tailwind)
+- Server components for data fetching (pages, ProtectedRoute)
+- Client components (`"use client"`) for interactivity (forms, project editor)
+- `AppContainer` layout for dashboard pages (sidebar + main)
+- `MainContainer` layout for public pages (navbar + footer)
+
+### State Management
+- Server state: Fetched in server components, passed as props
+- Client state: `useState` for local UI state, `zustand` available but usage limited
+- `react-hook-form` + `zod` for form validation
 
 ### Database Pattern
-- Posts are embedded in Project documents (not separate collection)
-- User data is split across `credentials` (auth) and `documents` (profile) collections
-- Project references are denormalized into UserDocument.projects array
-- MongoDB transactions used for operations spanning multiple collections
+- `connectToDatabase()` called at start of every API route/server function
+- Mongoose transactions for multi-collection operations (signup, project CRUD, user deletion)
+- Posts are **embedded** within Project documents (not separate collection)
 
 ## Documentation Framework
 
-- **Provider**: `plain` (no framework, plain markdown)
+- **Provider**: `plain` (plain markdown files)
 - **File extension**: `.md`
-- **Docs directory**: `docs/`
-- **Navigation config**: `docs/nav.json` — JSON file with `{ "nav": [{ "title": "...", "path": "..." }] }` structure
-- **Navigation strategy**: `manicule-nav-json`
+- **Navigation config**: `docs/nav.json` (manicule-nav-json strategy)
+- **Nav format**: `{ "nav": [{ "title": "...", "path": "..." }] }` — path is filename without extension
 - **Frontmatter**: None required
-- **MDX components**: Not used
+- **Docs directory**: `docs/`
+- **Existing docs**: `introduction.md` (comprehensive intro), `omak.md` (pipeline test page)
 
 ## Open Questions
 
 See `/workspace/context/open-questions.md` for detailed analysis.
-
-1. Where is the app currently deployed — Netlify or Vercel? (Code references both `cmsatom.netlify.app` and `atomcms.vercel.app`)
-2. Is billing/payments actually implemented? (Billing page shows "Coming soon..." and paid plans are `disabled: true`)
