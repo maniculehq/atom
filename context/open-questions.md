@@ -1,48 +1,38 @@
 # Open Questions
 
-## Q1: What is the production deployment target and URL?
+## Q1: Where is the app deployed — Netlify or Vercel?
+
+The codebase references two different hostnames in different locations, creating ambiguity about the canonical deployment.
 
 ### Options
-1. **Netlify at cmsatom.netlify.app** — The `baseAPIRoute` in `lib/contants.tsx:L32` uses `https://cmsatom.netlify.app/api` for production. The SDK's `packages/atom-nextjs/src/lib/constants.ts` also hardcodes this URL with a comment mentioning `https://www.atomcms.dev/api` as a future target.
-2. **Vercel at atomcms.vercel.app** — The `app/sitemap.ts` and `app/robots.ts` files reference `https://atomcms.vercel.app` as the canonical host. The landing page metadata says "Atom - The NextJS CMS".
-3. **Both/migration in progress** — There may be a migration from Netlify to Vercel, or the sitemap/robots references are outdated.
+1. **Netlify is the primary deployment** — The `baseAPIRoute` constant in `lib/contants.tsx:L28-L30` uses `https://cmsatom.netlify.app/api` for production. The SDK's hardcoded constant in `packages/atom-nextjs/src/lib/constants.ts` also points to `https://cmsatom.netlify.app/api`. This is the URL that actual API requests go to.
+2. **Vercel is the primary deployment** — The `app/robots.ts` references `https://atomcms.vercel.app` as the host and sitemap URL. The `app/sitemap.ts` uses `https://atomcms.vercel.app/blog` as the base. These are SEO-facing URLs.
+3. **Both are active / in transition** — The app may be deployed to both platforms simultaneously, or may have been migrated from one to the other without fully updating all references. The SDK constant has a comment `// CHANGE THIS TO https://www.atomcms.dev/api` suggesting a planned domain migration.
 
 ### Recommendation
-**Option 3: Both/migration in progress** — The codebase shows inconsistency: the API base URL points to Netlify (`cmsatom.netlify.app`) while SEO files point to Vercel (`atomcms.vercel.app`). The SDK constants file has a comment "CHANGE THIS TO https://www.atomcms.dev/api" suggesting a planned domain change. This suggests the deployment situation is in flux. Documentation should note both URLs and clarify with the developer.
+**Option 3: Both are active / in transition** — The evidence shows Netlify is used for the API (functional references in both the main app and SDK), while Vercel URLs appear in SEO files. The comment in `packages/atom-nextjs/src/lib/constants.ts` about changing to `atomcms.dev` suggests a domain migration is planned. Documentation should note `cmsatom.netlify.app` as the current API base but acknowledge the Vercel references.
 
 ---
 
-## Q2: Is the `atom-nextjs` package published to npm separately or only used via npm link?
+## Q2: Is billing/payments implemented?
 
 ### Options
-1. **Published to npm** — The `package.json` lists `"atom-nextjs": "^0.3.1"` as a dependency, and it has a `prepare` script that builds via `tsdx build`. The README mentions `npm i atom-nextjs@latest`.
-2. **Local only via npm link** — The README has instructions for linking locally with `npm link`.
-3. **Both** — Published to npm for end users, but linked locally during development.
+1. **Billing is not implemented** — The billing page at `app/app/settings/billing/page.tsx` displays "Coming soon..." with no payment integration code. In `lib/contants.tsx:L61-L86`, both `startup` and `business` plans have `disabled: true` and `active: false`. There is no Stripe or payment provider integration anywhere in the codebase.
+2. **Billing is partially implemented** — The plan system exists in the data model (`UserDocument.plan` field, `planDetails` with pricing), and plan limits are enforced in API routes (e.g., `app/api/posts/create/route.ts` checks `userPlan.max_body_length` and `userPlan.max_projects`). The infrastructure is in place but payment processing is not connected.
+3. **Billing is fully implemented but hidden** — Unlikely; no payment provider SDK or webhook handlers exist in the codebase.
 
 ### Recommendation
-**Option 3: Both** — The package is published on npm (version 0.3.1, referenced in `lib/contants.tsx:L85` as `npm i atom-nextjs@latest`). It's also developed within this monorepo and can be linked locally for development. The main app uses the published version as a dependency.
+**Option 2: Billing is partially implemented** — The plan enforcement logic is real and functional (enforced in post creation, project creation, and post update routes), but there is no way for users to upgrade plans since no payment integration exists. All users default to the "single" (free) plan. Documentation should describe the plan system as it exists while noting that paid plan upgrades are not yet available.
 
 ---
 
-## Q3: Is the billing/payments system implemented?
+## Q3: What is the relationship between the main app's blog and the SDK?
 
 ### Options
-1. **Not implemented** — The billing page at `app/app/settings/billing/page.tsx` simply renders "Coming soon...". The `startup` and `business` plans have `disabled: true` in `lib/contants.tsx`.
-2. **Partially implemented** — Plan types exist in the data model and are enforced in API routes (post creation checks plan limits).
-3. **Planned for future** — The plan structure is in place but no payment integration exists.
+1. **The main app dogfoods its own SDK** — The Atom website itself uses `atom-nextjs` to render its own blog at `/blog`. This is evidenced by `app/blog/page.tsx` importing `AtomPage` from `atom-nextjs` and `app/sitemap.ts` using `generateSitemap` from `atom-nextjs`, both using `process.env.ATOM_PROJECT_KEY`.
+2. **The blog routes are demo/example code** — The blog pages might exist primarily as a demonstration of the SDK for potential users.
+3. **The blog is independent of the SDK** — Incorrect; the imports clearly show SDK usage.
 
 ### Recommendation
-**Option 3: Planned for future** — The plan system is structurally complete (types, limits, enforcement in API routes) but only the free "single" plan is active. Paid plans are disabled (`disabled: true`), and the billing page shows "Coming soon". There's no payment provider integration (no Stripe, etc.).
-
----
-
-## Q4: What is the `contants.tsx` file's intentional filename?
-
-### Options
-1. **Typo — should be `constants.tsx`** — The file is at `lib/contants.tsx` which appears to be a misspelling of "constants". Similarly, `UserDocumnetProjectsCreator` in `lib/types.ts` has "Documnet" instead of "Document".
-2. **Intentional naming** — Unlikely but possible.
-3. **Legacy naming that hasn't been refactored** — The typo exists throughout the codebase (all imports reference `contants`), so renaming would require updating many files.
-
-### Recommendation
-**Option 1: Typo** — This is clearly a typo that has propagated throughout the codebase. Documentation should use the correct spelling "constants" when referring to concepts, but reference the actual filename `contants.tsx` when pointing to file paths.
+**Option 1: The main app dogfoods its own SDK** — The Atom website eats its own dogfood by using the `atom-nextjs` SDK to power its own blog section. This is a strong pattern to highlight in documentation, as it demonstrates real-world SDK usage directly in the source repo.
 

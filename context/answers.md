@@ -1,18 +1,14 @@
 # Answers
 
-## Q: What is the production deployment target and URL?
+## Q: Where is the app deployed — Netlify or Vercel?
 
-The codebase shows inconsistent production URLs. The API base URL in `lib/contants.tsx` points to `https://cmsatom.netlify.app/api` (Netlify), while SEO files (`app/sitemap.ts`, `app/robots.ts`) reference `https://atomcms.vercel.app` (Vercel). The SDK constants file has a comment suggesting a planned migration to `https://www.atomcms.dev/api`. The deployment situation appears to be in flux or transitioning between hosts.
+Both platforms appear to be in use or in transition. The API base URL in both the main app (`lib/contants.tsx`) and the SDK (`packages/atom-nextjs/src/lib/constants.ts`) points to `cmsatom.netlify.app`, while SEO files (`app/robots.ts`, `app/sitemap.ts`) reference `atomcms.vercel.app`. A comment in the SDK constants suggests a planned migration to `atomcms.dev`. Documentation should treat `cmsatom.netlify.app` as the current API host.
 
-## Q: Is the `atom-nextjs` package published to npm separately or only used via npm link?
+## Q: Is billing/payments implemented?
 
-The `atom-nextjs` package (v0.3.1) is published on npm and used as a regular dependency by the main app (`"atom-nextjs": "^0.3.1"` in package.json). It is also developed within this monorepo under `packages/atom-nextjs/` and can be linked locally during development using `npm link`.
+Billing is partially implemented. The plan system exists in the data model and plan limits (max projects, max posts, max body length) are actively enforced in API routes. However, there is no payment processing integration — no Stripe, no webhooks, no checkout flow. The billing page shows "Coming soon..." and paid plans (`startup`, `business`) are marked `disabled: true`. All users default to the free "single" plan.
 
-## Q: Is the billing/payments system implemented?
+## Q: What is the relationship between the main app's blog and the SDK?
 
-The billing system is not yet implemented. The plan structure exists in the data model with three tiers (single, startup, business), and plan limits are enforced in API routes. However, only the free "single" plan is active — the paid plans have `disabled: true`, the billing page shows "Coming soon", and there is no payment provider integration.
-
-## Q: What is the `contants.tsx` file's intentional filename?
-
-The filename `lib/contants.tsx` is a typo (should be "constants"). The misspelling has propagated throughout the codebase via imports. Similarly, the type `UserDocumnetProjectsCreator` in `lib/types.ts` is a typo for "UserDocumentProjectsCreator".
+The Atom website dogfoods its own SDK. The `/blog` routes (`app/blog/page.tsx`, `app/blog/[id]/page.tsx`) import and use `AtomPage`, `Atom`, and `generatePostMetadata` from the `atom-nextjs` package, authenticating with `process.env.ATOM_PROJECT_KEY`. The sitemap generation also uses the SDK's `generateSitemap` function.
 
