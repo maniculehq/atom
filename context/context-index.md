@@ -4,6 +4,8 @@
 
 Atom is a headless CMS built for Next.js. It lets users create blog projects, write markdown posts in a dashboard, and render them in their own Next.js sites via a companion SDK package (`atom-nextjs`). The main app is a Next.js 14 App Router project using MongoDB (Mongoose), Lucia for session-based auth, Upstash Redis for rate limiting, Tailwind CSS, shadcn/ui components, and Argon2 password hashing. The codebase also contains the `atom-nextjs` npm package as a sub-package.
 
+The repository is structured as a monorepo: the root is a Next.js 14 App Router application (the Atom dashboard and API at `app/`), with a publishable npm package at `packages/atom-nextjs/` that provides React server components (`Atom`, `AtomPage`, `AtomBody`) and helper functions (`getPost`, `getProject`, `generatePostMetadata`, `generateSitemap`) for rendering blog content. The dashboard exposes 14 REST API endpoints under `/api/` for auth, post, and project management. Data is stored in four MongoDB collections (`credentials`, `documents`, `projects`, `sessions`) accessed via Mongoose, with Lucia v3 handling session-cookie authentication for dashboard users and Bearer `project_key` tokens authenticating SDK consumers. Rate limiting is enforced on all API routes through Upstash Redis middleware (30 requests/minute per IP).
+
 ## File Tree
 
 ```
