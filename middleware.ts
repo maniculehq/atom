@@ -21,9 +21,29 @@ export default async function middleware(request: NextRequest) {
 
   if (requestPath.startsWith("/api")) {
     try {
-      const { success } = await ratelimit.limit(ip);
+      const { success, remaining, limit, reset } = await ratelimit.limit(ip);
 
-      if (!success) throw new Error("Too many requests.");
+      if (!success) {
+        return NextResponse.json<ApiResponse>(
+          { response: null, success: false, message: "Too many requests. Please retry after 60 seconds." },
+          {
+            status: 429,
+            headers: {
+              "X-RateLimit-Limit": String(limit),
+              "X-RateLimit-Remaining": "0",
+              "X-RateLimit-Reset": String(reset),
+              "Retry-After": "60",
+            },
+          }
+        );
+      }
+
+      // Add rate limit headers to successful responses
+      const response = NextResponse.next();
+      response.headers.set("X-RateLimit-Limit", String(limit));
+      response.headers.set("X-RateLimit-Remaining", String(remaining));
+      response.headers.set("X-RateLimit-Reset", String(reset));
+      return response;
     } catch (err: any) {
       console.log(err);
 
