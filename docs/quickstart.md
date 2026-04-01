@@ -22,7 +22,7 @@ The steps below walk you through getting your project key, creating content, and
 
 ## Prerequisites
 
-- [Node.js](https://nodejs.org/) 16 or later
+- [Node.js](https://nodejs.org/) 18.17 or later
 - A Next.js 14 project using the App Router
 - [TailwindCSS](https://tailwindcss.com/) installed in your project
 - An Atom account (free) at [cmsatom.netlify.app](https://cmsatom.netlify.app)
@@ -43,8 +43,8 @@ While you're still in the project, click **Create post**. Fill in the fields:
 | **Author** | Your name | Yes |
 | **Body** | Markdown content (GitHub Flavored Markdown supported) | Yes |
 | **Teaser** | A short summary shown on the blog listing page | Yes |
-| **Keywords** | Comma-separated tags | No |
-| **Cover image link** | A URL to an image | No |
+| **Keywords** | Comma-separated tags | Yes |
+| **Cover image link** | A URL to an image | Yes |
 
 Save the post. You now have content to display.
 
@@ -124,7 +124,7 @@ export default function Blog() {
 
 ## 7. Create the single post page
 
-Create `app/blog/[id]/page.tsx`. This page renders one post and generates its metadata (title, description, Open Graph tags) automatically:
+Create `app/blog/[id]/page.tsx`. This page renders one post and generates its metadata (title, description, keywords, author) automatically:
 
 ```tsx
 // app/blog/[id]/page.tsx
@@ -146,7 +146,7 @@ export default function BlogPage({ params }: BlogParams) {
 }
 ```
 
-`AtomPost` fetches a single post by ID and renders it as a full article with a title, cover image, author, date, and the markdown body (compiled with `remark-gfm` for GitHub Flavored Markdown). The `generatePostMetadata` function makes a separate request to build a Next.js `Metadata` object, so your posts get proper `<title>` and `<meta>` tags without any extra work.
+`AtomPost` fetches a single post by ID and renders it as a full article with a title, cover image, author, date, and the markdown body (compiled with `remark-gfm` for GitHub Flavored Markdown). The `generatePostMetadata` function makes a separate request to build a Next.js `Metadata` object, so your posts get proper `<title>`, description, and author `<meta>` tags without any extra work.
 
 **`AtomPost` props:**
 
@@ -176,6 +176,7 @@ If you see the project title, the post card, and the rendered markdown content, 
 | Blank page or error on `/blog` | Missing or invalid `ATOM_PROJECT_KEY` | Check `.env.local` and restart the dev server |
 | Unstyled content (no typography) | `@tailwindcss/typography` not configured | Verify `tailwind.config.ts` includes the plugin |
 | SDK components not styled | Tailwind not scanning SDK source | Add the `node_modules/atom-nextjs` content path |
+| White text on white background | Dark mode enabled in your project | The SDK does not support dark mode. Disable it or override styles for SDK components |
 
 ## Add more demo content
 
