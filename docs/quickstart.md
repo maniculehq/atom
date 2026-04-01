@@ -2,6 +2,24 @@
 
 Go from zero to a working blog in your Next.js app in under ten minutes.
 
+Here's the end result — a blog listing page in a single file:
+
+```tsx
+// app/blog/page.tsx
+import { AtomPage, AtomLoadingSkeleton } from 'atom-nextjs';
+import { Suspense } from 'react';
+
+export default function Blog() {
+  return (
+    <Suspense fallback={<AtomLoadingSkeleton />}>
+      <AtomPage baseRoute="/blog" projectKey={process.env.ATOM_PROJECT_KEY!} />
+    </Suspense>
+  );
+}
+```
+
+The steps below walk you through getting your project key, creating content, and setting this up.
+
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) 16 or later
