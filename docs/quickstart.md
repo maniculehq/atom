@@ -15,16 +15,18 @@ Sign up or sign in at [cmsatom.netlify.app](https://cmsatom.netlify.app/signup).
 
 After the project is created, open it and click **Copy project key** in the bottom-left sidebar. This key is a Bearer token that authenticates your Next.js app against the Atom API. You'll need it in the next step.
 
-## 2. Write a test post
+## 2. Write a test post so you have content to display
 
 While you're still in the project, click **Create post**. Fill in the fields:
 
-- **Title**: "Hello World"
-- **Author**: your name
-- **Body**: some markdown content (GitHub Flavored Markdown is supported)
-- **Teaser**: a short summary that appears on the blog listing page
-- **Keywords**: comma-separated tags (optional)
-- **Cover image link**: a URL to an image (optional)
+| Field | Example | Required |
+|---|---|---|
+| **Title** | "Hello World" | Yes |
+| **Author** | Your name | Yes |
+| **Body** | Markdown content (GitHub Flavored Markdown supported) | Yes |
+| **Teaser** | A short summary shown on the blog listing page | Yes |
+| **Keywords** | Comma-separated tags | No |
+| **Cover image link** | A URL to an image | No |
 
 Save the post. You now have content to display.
 
@@ -46,7 +48,7 @@ Install `atom-nextjs` and the Tailwind typography plugin (used by the post rende
 npm install atom-nextjs @tailwindcss/typography
 ```
 
-## 5. Configure Tailwind CSS
+## 5. Configure Tailwind to scan SDK components
 
 The SDK ships its own components with Tailwind classes, so your Tailwind config needs to scan the package's source files. It also uses the `@tailwindcss/typography` plugin for the `prose` classes that style rendered markdown.
 
@@ -94,6 +96,14 @@ export default function Blog() {
 
 `AtomPage` is an async server component that fetches your project's posts from the Atom API and renders each one as a card. The `baseRoute` prop tells it where individual posts live, so each card links to `/blog/[id]`. Wrapping it in `<Suspense>` lets Next.js stream the page shell immediately and show a skeleton while the data loads.
 
+**`AtomPage` props:**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `projectKey` | `string` | *(required)* | Your project's API key from the Atom dashboard |
+| `baseRoute` | `string` | *(required)* | Route prefix for post links (e.g. `"/blog"` → `"/blog/[id]"`) |
+| `title` | `boolean` | `true` | Whether to render the project title as an `<h1>` above the post list |
+
 ## 7. Create the single post page
 
 Create `app/blog/[id]/page.tsx`. This page renders one post and generates its metadata (title, description, Open Graph tags) automatically:
@@ -120,6 +130,15 @@ export default function BlogPage({ params }: BlogParams) {
 
 `AtomPost` fetches a single post by ID and renders it as a full article with a title, cover image, author, date, and the markdown body (compiled with `remark-gfm` for GitHub Flavored Markdown). The `generatePostMetadata` function makes a separate request to build a Next.js `Metadata` object, so your posts get proper `<title>` and `<meta>` tags without any extra work.
 
+**`AtomPost` props:**
+
+| Prop | Type | Default | Description |
+|---|---|---|---|
+| `projectKey` | `string` | *(required)* | Your project's API key |
+| `postId` | `string` | *(required)* | The ID of the post to fetch (typically from the route parameter) |
+| `remarkPlugins` | `any[]` | `undefined` | Additional remark plugins passed to the MDX compiler |
+| `rehypePlugins` | `any[]` | `undefined` | Additional rehype plugins passed to the MDX compiler |
+
 ## 8. Start the dev server and verify
 
 Run your development server:
@@ -131,6 +150,14 @@ npm run dev
 Open [http://localhost:3000/blog](http://localhost:3000/blog). You should see a card for the "Hello World" post you created earlier. Click the card to navigate to the full post.
 
 If you see the project title, the post card, and the rendered markdown content, everything is working.
+
+### Troubleshooting
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Blank page or error on `/blog` | Missing or invalid `ATOM_PROJECT_KEY` | Check `.env.local` and restart the dev server |
+| Unstyled content (no typography) | `@tailwindcss/typography` not configured | Verify `tailwind.config.ts` includes the plugin |
+| SDK components not styled | Tailwind not scanning SDK source | Add the `node_modules/atom-nextjs` content path |
 
 ## Add more demo content
 
@@ -176,6 +203,6 @@ With two files and one environment variable, your Next.js app now has:
 
 ## Next steps
 
-- **[Introduction](introduction.md)**: Learn how the dashboard and SDK fit together, and see the full list of components and functions.
+- **[Introduction](introduction.md)**: Learn how the dashboard and SDK fit together, and see the full list of components, functions, and response shapes.
 - **Add a sitemap**: Use the `generateSitemap` function to create `app/sitemap.ts` and give search engines a map of your blog posts.
 - **Customize rendering**: Pass custom `remarkPlugins` or `rehypePlugins` to `AtomPost` to extend the markdown pipeline.
